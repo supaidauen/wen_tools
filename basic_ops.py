@@ -46,6 +46,7 @@ class OBJECT_OT_Clear_Mesh(bpy.types.Operator):
     for vgroup in vgroups:
       if vgroup.name not in ob.vertex_groups.keys():
         ob.vertex_groups.new(vgroup.name)
+    me.name = clear.name
     clear.user_clear()
     data.meshes.remove(clear)
     
@@ -266,7 +267,7 @@ class OBJECT_OT_Image_Save_Options(bpy.types.Operator):
     
     filepath: bpy.props.StringProperty(name="File Path", description="Path where the image will be saved",maxlen=1024, default="")
     filter_folder: bpy.props.BoolProperty(name="Filter folders", description="", default=True, options={'HIDDEN'})
-    imageFileType: bpy.props.EnumProperty(items=[('PNG Save',)])
+    # imageFileType: bpy.props.EnumProperty(items=[('PNG Save',)])
     
     def execute(self, context):
         self.save_image()
@@ -278,14 +279,15 @@ class OBJECT_OT_Image_Save_Options(bpy.types.Operator):
         img = bpy.context.space_data.image
         bpy.context.scene.render.image_settings.file_format = 'PNG'
 
-classes = (
-  OBJECT_OT_Clear_Mesh,
-  OBJECT_OT_Sculpt_Bake_Prep,
-  OBJECT_OT_Sculpt_Export_Prep,
-  OBJECT_OT_Quick_Bake,
-  OBJECT_OT_Tidy_Rename,
-  OBJECT_OT_Pose_Rest_Toggle,
-  OBJECT_OT_Quick_Save,
-  OBJECT_OT_Image_Save_Options
-)
-register, unregister = bpy.utils.register_classes_factory(classes)
+import sys,inspect
+classes = (cls[1] for cls in inspect.getmembers(sys.modules[__name__], lambda member: inspect.isclass(member) and member.__module__ == __name__))
+
+def register():
+  from bpy.utils import register_class
+  for cls in classes:
+    register_class(cls)
+
+def unregister():
+  from bpy.utils import unregister_class
+  for cls in reversed(classes):
+    unregister_class(cls)

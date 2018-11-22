@@ -204,7 +204,15 @@ def set_material(ob_to, ob_from):
       ob_to_mat.material = ob_from_mat.material
   return
 
-classes = (
-  OBJECT_OT_Copy_Reference_Mesh_Geometry,
-)
-register, unregister = bpy.utils.register_classes_factory(classes)
+import sys,inspect
+classes = (cls[1] for cls in inspect.getmembers(sys.modules[__name__], lambda member: inspect.isclass(member) and member.__module__ == __name__))
+
+def register():
+  from bpy.utils import register_class
+  for cls in classes:
+    register_class(cls)
+
+def unregister():
+  from bpy.utils import unregister_class
+  for cls in reversed(classes):
+    unregister_class(cls)

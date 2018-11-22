@@ -90,8 +90,8 @@ class OBJECT_OT_Prep_Hair_Object(bpy.types.Operator):
   bl_options = {'REGISTER', 'UNDO'}
 
   hair_type_list = ["Thick","Mid","Thin"]
-  hair_material_prefix = StringProperty(name='Hair Material Prefix', default='hair')
-  hair_export_object = StringProperty(name='Hair Export Object',default='HairNew')
+  hair_material_prefix: StringProperty(name='Hair Material Prefix', default='hair')
+  hair_export_object: StringProperty(name='Hair Export Object',default='HairNew')
 
   def execute(self, context):
     hair_bodies = []
@@ -140,8 +140,15 @@ class OBJECT_OT_Prep_Hair_Object(bpy.types.Operator):
     bpy.ops.object.join()
     return {'FINISHED'}
 
-classes = (
-  OBJECT_OT_Prep_Hair_Movement,
-  OBJECT_OT_Prep_Hair_Object
-)
-register, unregister = bpy.utils.register_classes_factory(classes)
+import sys,inspect
+classes = (cls[1] for cls in inspect.getmembers(sys.modules[__name__], lambda member: inspect.isclass(member) and member.__module__ == __name__))
+
+def register():
+  from bpy.utils import register_class
+  for cls in classes:
+    register_class(cls)
+
+def unregister():
+  from bpy.utils import unregister_class
+  for cls in reversed(classes):
+    unregister_class(cls)

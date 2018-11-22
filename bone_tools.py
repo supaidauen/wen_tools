@@ -17,7 +17,6 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
-from bpy.utils import register_class
 
 def get_bones(arm, context, selected):
   """
@@ -112,8 +111,15 @@ class VIEW_3D_PT_Bone_Tools(bpy.types.Panel):
     row.prop(context.active_object.data, "layers", toggle=True, text='')
     row = column.row(align=True)
 
-classes = (
-  OBJECT_OT_Pose_Rest_Toggle,
-  VIEW_3D_PT_Bone_Tools
-)
-register, unregister = bpy.utils.register_classes_factory(classes)
+import sys,inspect
+classes = (cls[1] for cls in inspect.getmembers(sys.modules[__name__], lambda member: inspect.isclass(member) and member.__module__ == __name__))
+
+def register():
+  from bpy.utils import register_class
+  for cls in classes:
+    register_class(cls)
+
+def unregister():
+  from bpy.utils import unregister_class
+  for cls in reversed(classes):
+    unregister_class(cls)

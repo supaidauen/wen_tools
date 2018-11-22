@@ -120,15 +120,15 @@ class OBJECT_OT_Export_SM_to_UE4(bpy.types.Operator, ExportHelper):
     cont = bpy.context
     data = bpy.data
     scn = cont.scene
-    if len(bpy.context.selected_objects) == 1 and \
-      bpy.context.selected_objects[0].type == "ARMATURE" and \
-      len(bpy.context.selected_objects[0].children) == 0:
+    if len(cont.selected_objects) == 1 and \
+      cont.selected_objects[0].type == "ARMATURE" and \
+      len(cont.selected_objects[0].children) == 0:
       do_fbx_export(self,False)
       return {'FINISHED'}
     obs = cont.active_object.children
     layers = []
-    old_arm = bpy.context.active_object
-    ue4_arm = bpy.data.objects['ROOT'] if 'ROOT' in bpy.data.objects else old_arm
+    old_arm = cont.active_object
+    ue4_arm = data.objects['ROOT'] if 'ROOT' in bpy.data.objects else old_arm
 
     if ue4_arm == '':
       self.report({'ERROR'}, "No Valid Armatures for export, please assign an Armature parent relationship, aborting.")
@@ -142,15 +142,15 @@ class OBJECT_OT_Export_SM_to_UE4(bpy.types.Operator, ExportHelper):
     for i in range(len(scn.layers)):
       if ue4_arm.layers[i] == True:
         if old_arm.layers[i] == False:
-          bpy.context.scene.layers[i] = True
+          cont.scene.layers[i] = True
           layers.append(i)
 
     ue4_arm.select = True
-    bpy.context.scene.objects.active = ue4_arm
+    cont.scene.objects.active = ue4_arm
     if "act.rest_pose" in bpy.data.actions:
-      bpy.context.active_object.animation_data.action = bpy.data.actions["act.rest_pose"]
+      cont.active_object.animation_data.action = bpy.data.actions["act.rest_pose"]
     
-    bpy.context.scene.update()
+    cont.scene.update()
 
     do_fbx_export(self,False)
 
@@ -163,9 +163,9 @@ class OBJECT_OT_Export_SM_to_UE4(bpy.types.Operator, ExportHelper):
       old_arm.select = True
 
     for i in layers:
-      bpy.context.scene.layers[i] = False
+      cont.scene.layers[i] = False
 
-    bpy.context.scene.update()
+    cont.scene.update()
     return {'FINISHED'}
 
 class OBJECT_OT_Export_OBJ_to_BAKER(bpy.types.Operator, ExportHelper):
@@ -219,15 +219,16 @@ class OBJECT_OT_Bake_Animations(bpy.types.Operator, ExportHelper):
   def execute(self, context):
     keyframes = []
     layers = []
-    arm = bpy.context.active_object
-    current_anim = bpy.context.active_object.animation_data.action
+    cont = bpy.context
+    arm = cont.active_object
+    current_anim = cont.active_object.animation_data.action
     ue4_arm = bpy.data.objects['ROOT']
 
     bpy.ops.pose.select_all(action='DESELECT')
     arm.pose.bone_groups.active = arm.pose.bone_groups['Pose_Bones']
     bpy.ops.pose.group_select()
 
-    for f in bpy.context.active_object.animation_data.action.fcurves:
+    for f in cont.active_object.animation_data.action.fcurves:
       for keyframe in f.keyframe_points:
         x, y = keyframe.co
         if x not in keyframes:
@@ -235,34 +236,38 @@ class OBJECT_OT_Bake_Animations(bpy.types.Operator, ExportHelper):
 
 
     for i in keyframes:
-      bpy.context.scene.frame_set(i)
+      cont.scene.frame_set(i)
       bpy.ops.anim.keyframe_insert_menu(type='__ACTIVE__', confirm_success=True)
 
-    bpy.context.scene.frame_set(keyframes[0])
+    cont.scene.frame_set(keyframes[0])
 
     for i in range(0,20):
       if ue4_arm.layers[i] == True:
-        bpy.context.scene.layers[i] = True
+        cont.scene.layers[i] = True
         layers.append(i)
 
-    bpy.context.scene.objects.active = ue4_arm
+    cont.scene.objects.active = ue4_arm
     arm.select = False
     ue4_arm.select = True
-    bpy.context.active_object.animation_data.action = current_anim
+    cont.active_object.animation_data.action = current_anim
 
     do_fbx_export(self,True)
 
     for i in layers:
-      bpy.context.scene.layers[i] = False
+      cont.scene.layers[i] = False
 
-    bpy.context.scene.objects.active = arm
+    cont.scene.objects.active = arm
 
     return { 'FINISHED' }
 
-classes = (
-  OBJECT_OT_Export_SM_to_UE4,
-  OBJECT_OT_Export_OBJ_to_BAKER,
-  OBJECT_OT_Import_OBJ_for_CAGE,
-  OBJECT_OT_Bake_Animations
-)
-register, unregister = bpy.utils.register_classes_factory(classes)
+import sys,inspect
+classes = (cls[1] for cls in inspect.getmembers(sys.modules[__name__], lambda member: inspect.isclass(member) and member.__module__ == __name__))
+
+def register():
+  from bpy.utils import register_class
+  for cls in classes:
+    register_class(cls)
+def unregister():
+  from bpy.utils import unregister_class
+  for cls in reversed(classes):
+    unregister_class(cls)

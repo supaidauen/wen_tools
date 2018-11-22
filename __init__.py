@@ -30,18 +30,26 @@ bl_info = {
 
 bpydoc = '''Tools and keymaps to aid in content/character creation'''
 
-if 'bpy' in locals():
-  import imp
-  imp.reload(basic_ops)
-  imp.reload(copy_ref_geometry)
-  imp.reload(ue4_tools)
-  imp.reload(mesh_hair_tools)
-else:
+import importlib
+
+libs = (
+  ".basic_ops",
+  ".copy_ref_geometry",
+  ".mesh_hair_tools",
+  ".ue4_tools",
+)
+
+if not 'bpy' in locals():
+  modules = []
   import bpy
-  from . import basic_ops
-  from . import copy_ref_geometry
-  from . import ue4_tools
-  from . import mesh_hair_tools
+  for lib in libs:
+    i = importlib.import_module(lib, package="wen_tools")
+    modules.append(i)
+    i.register()
+else:
+  for i in modules:
+    importlib.reload(i)
+    i.unregister()
 
 class VIEW_3D_PT_WenToolsPanel(bpy.types.Panel):
   '''Wen Tools Panel'''
@@ -49,7 +57,7 @@ class VIEW_3D_PT_WenToolsPanel(bpy.types.Panel):
   bl_label = "Wen Tools"
   bl_space_type = 'VIEW_3D'
   bl_region_type = 'UI'
-  bl_category = "Wen Tools"
+  bl_category = "View"
 
 
   @classmethod
@@ -57,9 +65,10 @@ class VIEW_3D_PT_WenToolsPanel(bpy.types.Panel):
     return context.mode
 
   def draw(self, context):
+    scene = context.scene
     screen = context.screen
-    crg = screen.copyrefgeometryProps
-    php = screen.preparehairProps
+    crg = scene.copyrefgeometryProps
+    php = scene.preparehairProps
     layout = self.layout
 
     box = layout.box()
@@ -200,15 +209,13 @@ class VIEW_3D_PT_WenToolsPanel(bpy.types.Panel):
       else:
           sub.prop(cbk, "cage_extrusion", text="Ray Distance")
 
-    box = layout.box()
-    col = box.column(align=True)
-    col.alignment = 'EXPAND'
-    col.operator("object.flatten_to_uv", text="Flatten Mesh to UV", icon='NONE')
+    # box = layout.box()
+    # col = box.column(align=True)
+    # col.alignment = 'EXPAND'
+    # col.operator("object.flatten_to_uv", text="Flatten Mesh to UV", icon='NONE')
 
-classes = (
-  VIEW_3D_PT_WenToolsPanel,
-)
-
+import sys,inspect
+classes = (cls[1] for cls in inspect.getmembers(sys.modules[__name__], inspect.isclass))
 addon_keymaps = []
 # Register the operator
 def register():
@@ -216,8 +223,8 @@ def register():
   for cls in classes:
     register_class(cls)
   #Register Properties
-  bpy.types.Screen.copyrefgeometryProps = bpy.props.PointerProperty(type = copy_ref_geometry.crmProps)
-  bpy.types.Screen.preparehairProps = bpy.props.PointerProperty(type = mesh_hair_tools.phProps)
+  bpy.types.Scene.copyrefgeometryProps = bpy.props.PointerProperty(type = copy_ref_geometry.crmProps)
+  bpy.types.Scene.preparehairProps = bpy.props.PointerProperty(type = mesh_hair_tools.phProps)
   bpy.types.Screen.uet_expanded= bpy.props.BoolProperty(default=False)
   bpy.types.Screen.crg_expanded= bpy.props.BoolProperty(default=False)
   bpy.types.Screen.ht_expanded= bpy.props.BoolProperty(default=False)
