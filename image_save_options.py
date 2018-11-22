@@ -19,7 +19,7 @@
 import bpy, struct, os
 from bpy.props import *
 
-class Image_Save_Options(bpy.types.Operator):
+class OBJECT_OT_Image_Save_Options(bpy.types.Operator):
     '''Image Save Options'''
     
     bl_idname = "save.image_save_options"

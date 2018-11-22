@@ -17,9 +17,8 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
-import bmesh
 
-class Clear_Mesh(bpy.types.Operator):
+class OBJECT_OT_Clear_Mesh(bpy.types.Operator):
   '''Clear Mesh'''
   
   bl_idname = "object.clear_mesh"
@@ -52,7 +51,7 @@ class Clear_Mesh(bpy.types.Operator):
     
     return {'FINISHED'}
 
-class Sculpt_Bake_Prep(bpy.types.Operator):
+class OBJECT_OT_Sculpt_Bake_Prep(bpy.types.Operator):
   '''Prep Sculpted Objects'''
   
   bl_idname = "object.sculpt_bake_prep"
@@ -142,7 +141,7 @@ class Sculpt_Bake_Prep(bpy.types.Operator):
 
     return {'FINISHED'}
 
-class Sculpt_Export_Prep(bpy.types.Operator):
+class OBJECT_OT_Sculpt_Export_Prep(bpy.types.Operator):
   '''Prep Sculpted Objects'''
   
   bl_idname = "object.sculpt_export_prep"
@@ -170,8 +169,7 @@ class Sculpt_Export_Prep(bpy.types.Operator):
 
     return {'FINISHED'}
 
-
-class Quick_Bake(bpy.types.Operator):
+class OBJECT_OT_Quick_Bake(bpy.types.Operator):
   '''Quick Bake'''
 
   bl_idname = "object.quick_bake"
@@ -212,7 +210,7 @@ class Quick_Bake(bpy.types.Operator):
 
     return {'FINISHED'}
 
-class Tidy_Rename(bpy.types.Operator):
+class OBJECT_OT_Tidy_Rename(bpy.types.Operator):
   '''Rename Tidily'''
   
   bl_idname = "object.tidy_rename"
@@ -234,7 +232,7 @@ class Tidy_Rename(bpy.types.Operator):
         pass
     return {'FINISHED'}
 
-class Pose_Rest_Toggle(bpy.types.Operator):
+class OBJECT_OT_Pose_Rest_Toggle(bpy.types.Operator):
   '''Pose/Rest Toggle'''
 
   bl_idname = "pose.pose_rest_toggle"
@@ -246,3 +244,48 @@ class Pose_Rest_Toggle(bpy.types.Operator):
     if cont.active_object.data.pose_position == 'POSE': cont.active_object.data.pose_position = 'REST'
     else: cont.active_object.data.pose_position = 'POSE'
     return {'FINISHED'}
+
+class OBJECT_OT_Quick_Save(bpy.types.Operator):
+  '''Save Immediately'''
+
+  bl_idname = "wm.quick_save"
+  bl_label = "Quick Save"
+  bl_options = {'REGISTER', 'UNDO'}
+  
+  def execute(self, context):
+    bpy.ops.wm.save_mainfile(check_existing=False, compress=True,)
+    return {'FINISHED'}
+
+class OBJECT_OT_Image_Save_Options(bpy.types.Operator):
+    '''Image Save Options'''
+    
+    bl_idname = "save.image_save_options"
+    bl_label = "Image Save Options"
+    bl_description = "Better Image Save Options"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    filepath: bpy.props.StringProperty(name="File Path", description="Path where the image will be saved",maxlen=1024, default="")
+    filter_folder: bpy.props.BoolProperty(name="Filter folders", description="", default=True, options={'HIDDEN'})
+    imageFileType: bpy.props.EnumProperty(items=[('PNG Save',)])
+    
+    def execute(self, context):
+        self.save_image()
+        return {'FINISHED'}
+    def invoke(self, context, event):
+        wm = context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+    def save_image(self):
+        img = bpy.context.space_data.image
+        bpy.context.scene.render.image_settings.file_format = 'PNG'
+
+classes = (
+  OBJECT_OT_Clear_Mesh,
+  OBJECT_OT_Sculpt_Bake_Prep,
+  OBJECT_OT_Sculpt_Export_Prep,
+  OBJECT_OT_Quick_Bake,
+  OBJECT_OT_Tidy_Rename,
+  OBJECT_OT_Pose_Rest_Toggle,
+  OBJECT_OT_Quick_Save,
+  OBJECT_OT_Image_Save_Options
+)
+register, unregister = bpy.utils.register_classes_factory(classes)

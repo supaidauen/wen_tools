@@ -102,7 +102,7 @@ def do_obj_import(self):
   use_smooth_groups=False,
   split_mode="ON")
 
-class Export_SM_to_UE4(bpy.types.Operator, ExportHelper):
+class OBJECT_OT_Export_SM_to_UE4(bpy.types.Operator, ExportHelper):
   '''Export to UE4'''
 
   bl_idname = "object.export_sm_to_ue4"
@@ -168,7 +168,7 @@ class Export_SM_to_UE4(bpy.types.Operator, ExportHelper):
     bpy.context.scene.update()
     return {'FINISHED'}
 
-class Export_OBJ_to_BAKER(bpy.types.Operator, ExportHelper):
+class OBJECT_OT_Export_OBJ_to_BAKER(bpy.types.Operator, ExportHelper):
   '''Export Obj'''
 
   bl_idname = "object.export_obj_quick"
@@ -188,8 +188,7 @@ class Export_OBJ_to_BAKER(bpy.types.Operator, ExportHelper):
 
     return {'FINISHED'}
 
-
-class Import_OBJ_for_CAGE(bpy.types.Operator, ExportHelper):
+class OBJECT_OT_Import_OBJ_for_CAGE(bpy.types.Operator, ExportHelper):
   '''Import Obj'''
 
   bl_idname = "object.import_obj_quick"
@@ -203,7 +202,7 @@ class Import_OBJ_for_CAGE(bpy.types.Operator, ExportHelper):
 
     return {'FINISHED'}
 
-class Bake_Animations(bpy.types.Operator, ExportHelper):
+class OBJECT_OT_Bake_Animations(bpy.types.Operator, ExportHelper):
   '''Bake Deform Animation'''
 
   bl_idname = "object.bake_deform_animations"
@@ -259,3 +258,11 @@ class Bake_Animations(bpy.types.Operator, ExportHelper):
     bpy.context.scene.objects.active = arm
 
     return { 'FINISHED' }
+
+classes = (
+  OBJECT_OT_Export_SM_to_UE4,
+  OBJECT_OT_Export_OBJ_to_BAKER,
+  OBJECT_OT_Import_OBJ_for_CAGE,
+  OBJECT_OT_Bake_Animations
+)
+register, unregister = bpy.utils.register_classes_factory(classes)

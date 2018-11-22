@@ -17,7 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
-from bpy.props import IntProperty,StringProperty
+from bpy.props import StringProperty
 
 
 def prep_hair_uv(translate):
@@ -63,15 +63,15 @@ def prep_hair_object():
 class phProps(bpy.types.PropertyGroup):
   '''Class for the Properties'''
 
-  hair_material_prefix = StringProperty(name="Hair Material Prefix",
+  hair_material_prefix: StringProperty(name="Hair Material Prefix",
     description="Hair Material Prefix.",
     default='hair')
 
-  hair_export_object = StringProperty(name="Hair Export Object",
+  hair_export_object: StringProperty(name="Hair Export Object",
     description="Name of Hair Export Object.",
     default='HairNew')
 
-class Prep_Hair_Movement(bpy.types.Operator):
+class OBJECT_OT_Prep_Hair_Movement(bpy.types.Operator):
   '''Prepare Hair Movement'''
 
   bl_idname = "object.prep_hair_movement"
@@ -82,7 +82,7 @@ class Prep_Hair_Movement(bpy.types.Operator):
     prep_hair_movement()
     return {'FINISHED'}
 
-class Prep_Hair_Object(bpy.types.Operator):
+class OBJECT_OT_Prep_Hair_Object(bpy.types.Operator):
   '''Prepare Hair Object'''
 
   bl_idname = "object.prep_hair_object"
@@ -139,3 +139,9 @@ class Prep_Hair_Object(bpy.types.Operator):
     hair.select = True
     bpy.ops.object.join()
     return {'FINISHED'}
+
+classes = (
+  OBJECT_OT_Prep_Hair_Movement,
+  OBJECT_OT_Prep_Hair_Object
+)
+register, unregister = bpy.utils.register_classes_factory(classes)

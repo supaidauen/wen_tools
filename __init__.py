@@ -19,8 +19,8 @@
 bl_info = {
   'name': 'Wen Tools',
   'author': 'Supaidauen',
-  'version': (18, 8 ,2015),
-  'blender': (2, 7, 5),
+  'version': (21, 11 ,2018),
+  'blender': (2, 80, 0),
   'location': 'View3D > Object',
   'description': 'Tools and keymaps to aid in content/character creation',
   'warning': '', # used for warning icon and text in addons panel
@@ -32,32 +32,24 @@ bpydoc = '''Tools and keymaps to aid in content/character creation'''
 
 if 'bpy' in locals():
   import imp
-  imp.reload(quick_save)
-  imp.reload(copy_ref_geometry)
   imp.reload(basic_ops)
+  imp.reload(copy_ref_geometry)
   imp.reload(ue4_tools)
   imp.reload(mesh_hair_tools)
-  imp.reload(mesh_to_uv_and_back)
-  imp.reload(apply_modifiers)
-  imp.reload(pie_brushes)
 else:
   import bpy
-  from . import quick_save
-  from . import copy_ref_geometry
   from . import basic_ops
+  from . import copy_ref_geometry
   from . import ue4_tools
   from . import mesh_hair_tools
-  from . import mesh_to_uv_and_back
-  from . import apply_modifiers
-  from . import pie_brushes
 
 class VIEW_3D_PT_WenToolsPanel(bpy.types.Panel):
   '''Wen Tools Panel'''
 
-  bl_space_type = "VIEW_3D"
-  bl_region_type = "UI"
   bl_label = "Wen Tools"
-  bl_context = "object"
+  bl_space_type = 'VIEW_3D'
+  bl_region_type = 'UI'
+  bl_category = "Wen Tools"
 
 
   @classmethod
@@ -65,10 +57,10 @@ class VIEW_3D_PT_WenToolsPanel(bpy.types.Panel):
     return context.mode
 
   def draw(self, context):
-    crg = context.window_manager.copyrefgeometryProps
-    php = context.window_manager.preparehairProps
-    layout = self.layout
     screen = context.screen
+    crg = screen.copyrefgeometryProps
+    php = screen.preparehairProps
+    layout = self.layout
 
     box = layout.box()
     col = box.column(align=True)
@@ -137,7 +129,7 @@ class VIEW_3D_PT_WenToolsPanel(bpy.types.Panel):
       hair.hair_material_prefix = php.hair_material_prefix
       hair.hair_export_object = php.hair_export_object
 
-    #See bottom for registration of properties
+    # #See bottom for registration of properties
     if context.scene.render.engine == 'CYCLES':
       scene = context.scene
       cscene = scene.cycles
@@ -213,117 +205,123 @@ class VIEW_3D_PT_WenToolsPanel(bpy.types.Panel):
     col.alignment = 'EXPAND'
     col.operator("object.flatten_to_uv", text="Flatten Mesh to UV", icon='NONE')
 
+classes = (
+  VIEW_3D_PT_WenToolsPanel,
+)
+
 addon_keymaps = []
 # Register the operator
 def register():
-  bpy.utils.register_module(__name__)
-  
+  from bpy.utils import register_class
+  for cls in classes:
+    register_class(cls)
   #Register Properties
-  bpy.types.WindowManager.copyrefgeometryProps = bpy.props.PointerProperty(type = copy_ref_geometry.crmProps)
-  bpy.types.WindowManager.preparehairProps = bpy.props.PointerProperty(type = mesh_hair_tools.phProps)
-  bpy.types.Screen.uet_expanded = bpy.props.BoolProperty(default=False)
-  bpy.types.Screen.crg_expanded = bpy.props.BoolProperty(default=False)
-  bpy.types.Screen.ht_expanded = bpy.props.BoolProperty(default=False)
-  bpy.types.Screen.bt_expanded = bpy.props.BoolProperty(default=True)
-
-  wm = bpy.context.window_manager
-  kc = wm.keyconfigs.addon
-  
-  if kc:
-    #Map Object
-    km = kc.keymaps.new(name='Object Mode', space_type='EMPTY')
-
-    kmi = km.keymap_items.new('object.copy_vert_loc_from_ref', 'E', 'PRESS', alt=True)
-
-    addon_keymaps.append([km,kmi])
-
-    # Map Mesh
-    km = kc.keymaps.new('Mesh', space_type='EMPTY', region_type='WINDOW', modal=False)
-
-    kmi = km.keymap_items.new('mesh.symmetry_snap', 'X', 'PRESS', alt=True)
-    kmi = km.keymap_items.new('mesh.remove_doubles', 'D', 'PRESS', ctrl=True)
-    kmi = km.keymap_items.new('mesh.edge_rotate', 'E', 'PRESS', ctrl=True, shift=True)
-    kmi = km.keymap_items.new('wm.context_set_value', 'ONE', 'PRESS')
-    kmi.properties.data_path = 'tool_settings.mesh_select_mode'
-    kmi.properties.value = 'True,False,False'
-    kmi = km.keymap_items.new('wm.context_set_value', 'TWO', 'PRESS')
-    kmi.properties.data_path = 'tool_settings.mesh_select_mode'
-    kmi.properties.value = 'False,True,False'
-    kmi = km.keymap_items.new('wm.context_set_value', 'THREE', 'PRESS')
-    kmi.properties.data_path = 'tool_settings.mesh_select_mode'
-    kmi.properties.value = 'False,False,True'
-    kmi = km.keymap_items.new('wm.context_toggle', 'N', 'PRESS', alt=True)
-    kmi.properties.data_path = 'space_data.use_occlude_geometry'
-
-    addon_keymaps.append([km,kmi])
-
-    # Map 3D View
-    km = kc.keymaps.new('3D View Generic', space_type='VIEW_3D', region_type='WINDOW', modal=False)
-
-    kmi = km.keymap_items.new('wm.context_toggle_enum', 'T', 'PRESS', shift=True)
-    kmi.properties.data_path = 'user_preferences.inputs.view_rotate_method'
-    kmi.properties.value_1 = 'TURNTABLE'
-    kmi.properties.value_2 = 'TRACKBALL'
-    kmi = km.keymap_items.new('object.bake_image', 'F12', 'PRESS', alt=True)
-    kmi = km.keymap_items.new('wm.context_toggle', 'X', 'PRESS', shift=True, alt=True)
-    kmi.properties.data_path = 'object.show_x_ray'
-    kmi = km.keymap_items.new('wm.context_toggle', 'W', 'PRESS', shift=True, alt=True)
-    kmi.properties.data_path = 'object.show_wire'
-    kmi = km.keymap_items.new('wm.context_toggle', 'R', 'PRESS', shift=True, alt=True)
-    kmi.properties.data_path = 'space_data.show_only_render'
-
-    addon_keymaps.append([km,kmi])
-
-    # Map Window
-    km = kc.keymaps.new('Window', space_type='EMPTY', region_type='WINDOW', modal=False)
-
-    kmi = km.keymap_items.new('wm.quick_save', 'W', 'PRESS', ctrl=True)
-
-    addon_keymaps.append([km,kmi])
-
-    # Map UV Editor
-    km = kc.keymaps.new('UV Editor', space_type='EMPTY', region_type='WINDOW', modal=False)
-
-    kmi = km.keymap_items.new('wm.context_set_enum', 'PERIOD', 'PRESS')
-    kmi.properties.data_path = 'space_data.pivot_point'
-    kmi.properties.value = 'CURSOR'
-    kmi = km.keymap_items.new('wm.context_set_enum', 'COMMA', 'PRESS')
-    kmi.properties.data_path = 'space_data.pivot_point'
-    kmi.properties.value = 'CENTER'
-    kmi = km.keymap_items.new('uv.export_layout', 'E', 'PRESS', ctrl=True)
-    kmi.properties.export_all = True
-    kmi.properties.filepath = '//textures'
-    kmi = km.keymap_items.new('uv.align', 'W', 'PRESS', shift=True)
-    kmi.properties.axis = 'ALIGN_AUTO'
-
-    addon_keymaps.append([km,kmi])
-
-    # Map Sculpt
-    km = kc.keymaps.new('Sculpt', space_type='EMPTY', region_type='WINDOW', modal=False)
-    kmi = km.keymap_items.new('wm.context_toggle', 'X', 'PRESS', alt=True)
-    kmi.properties.data_path = 'tool_settings.sculpt.use_symmetry_x'
-    kmi = km.keymap_items.new('wm.call_menu_pie', 'W', 'PRESS')
-    kmi.properties.name = "paint.pie_brush"
-
-    addon_keymaps.append([km,kmi])
-
-    #Image Paint
-    km = kc.keymaps.new('Image Paint', space_type='EMPTY', region_type='WINDOW', modal=False)
-    kmi = km.keymap_items.new('wm.call_menu_pie', 'W', 'PRESS')
-    kmi.properties.name = "paint.pie_brush"
-
-    addon_keymaps.append([km,kmi])
+  bpy.types.Screen.copyrefgeometryProps = bpy.props.PointerProperty(type = copy_ref_geometry.crmProps)
+  bpy.types.Screen.preparehairProps = bpy.props.PointerProperty(type = mesh_hair_tools.phProps)
+  bpy.types.Screen.uet_expanded= bpy.props.BoolProperty(default=False)
+  bpy.types.Screen.crg_expanded= bpy.props.BoolProperty(default=False)
+  bpy.types.Screen.ht_expanded= bpy.props.BoolProperty(default=False)
+  bpy.types.Screen.bt_expanded= bpy.props.BoolProperty(default=True)
 
 def unregister():
-  for km,kmi in addon_keymaps:
-    km.keymap_items.remove(kmi)
-  addon_keymaps.clear()
+  from bpy.utils import unregister_class
+  for cls in reversed(classes):
+    unregister_class(cls)
 
-  bpy.utils.unregister_module(__name__)
-  del bpy.types.Screen.uet_expanded
-  del bpy.types.Screen.grg_expanded
-  del bpy.types.Screen.ht_expanded
-  del bpy.types.WindowManager.copyrefgeometryProps
+  # wm = bpy.context.window_manager
+  # kc = wm.keyconfigs.addon
+  
+  # if kc:
+  #   #Map Object
+  #   km = kc.keymaps.new(name='Object Mode', space_type='EMPTY')
+
+  #   kmi = km.keymap_items.new('object.copy_vert_loc_from_ref', 'E', 'PRESS', alt=True)
+
+  #   addon_keymaps.append([km,kmi])
+
+  #   # Map Mesh
+  #   km = kc.keymaps.new('Mesh', space_type='EMPTY', region_type='WINDOW', modal=False)
+
+  #   kmi = km.keymap_items.new('mesh.symmetry_snap', 'X', 'PRESS', alt=True)
+  #   kmi = km.keymap_items.new('mesh.remove_doubles', 'D', 'PRESS', ctrl=True)
+  #   kmi = km.keymap_items.new('mesh.edge_rotate', 'E', 'PRESS', ctrl=True, shift=True)
+  #   kmi = km.keymap_items.new('wm.context_set_value', 'ONE', 'PRESS')
+  #   kmi.properties.data_path = 'tool_settings.mesh_select_mode'
+  #   kmi.properties.value = 'True,False,False'
+  #   kmi = km.keymap_items.new('wm.context_set_value', 'TWO', 'PRESS')
+  #   kmi.properties.data_path = 'tool_settings.mesh_select_mode'
+  #   kmi.properties.value = 'False,True,False'
+  #   kmi = km.keymap_items.new('wm.context_set_value', 'THREE', 'PRESS')
+  #   kmi.properties.data_path = 'tool_settings.mesh_select_mode'
+  #   kmi.properties.value = 'False,False,True'
+  #   kmi = km.keymap_items.new('wm.context_toggle', 'N', 'PRESS', alt=True)
+  #   kmi.properties.data_path = 'space_data.use_occlude_geometry'
+
+  #   addon_keymaps.append([km,kmi])
+
+  #   # Map 3D View
+  #   km = kc.keymaps.new('3D View Generic', space_type='VIEW_3D', region_type='WINDOW', modal=False)
+
+  #   kmi = km.keymap_items.new('wm.context_toggle_enum', 'T', 'PRESS', shift=True)
+  #   kmi.properties.data_path = 'user_preferences.inputs.view_rotate_method'
+  #   kmi.properties.value_1 = 'TURNTABLE'
+  #   kmi.properties.value_2 = 'TRACKBALL'
+  #   kmi = km.keymap_items.new('object.bake_image', 'F12', 'PRESS', alt=True)
+  #   kmi = km.keymap_items.new('wm.context_toggle', 'X', 'PRESS', shift=True, alt=True)
+  #   kmi.properties.data_path = 'object.show_x_ray'
+  #   kmi = km.keymap_items.new('wm.context_toggle', 'W', 'PRESS', shift=True, alt=True)
+  #   kmi.properties.data_path = 'object.show_wire'
+  #   kmi = km.keymap_items.new('wm.context_toggle', 'R', 'PRESS', shift=True, alt=True)
+  #   kmi.properties.data_path = 'space_data.show_only_render'
+
+  #   addon_keymaps.append([km,kmi])
+
+  #   # Map Window
+  #   km = kc.keymaps.new('Window', space_type='EMPTY', region_type='WINDOW', modal=False)
+
+  #   kmi = km.keymap_items.new('wm.quick_save', 'W', 'PRESS', ctrl=True)
+
+  #   addon_keymaps.append([km,kmi])
+
+  #   # Map UV Editor
+  #   km = kc.keymaps.new('UV Editor', space_type='EMPTY', region_type='WINDOW', modal=False)
+
+  #   kmi = km.keymap_items.new('wm.context_set_enum', 'PERIOD', 'PRESS')
+  #   kmi.properties.data_path = 'space_data.pivot_point'
+  #   kmi.properties.value = 'CURSOR'
+  #   kmi = km.keymap_items.new('wm.context_set_enum', 'COMMA', 'PRESS')
+  #   kmi.properties.data_path = 'space_data.pivot_point'
+  #   kmi.properties.value = 'CENTER'
+  #   kmi = km.keymap_items.new('uv.export_layout', 'E', 'PRESS', ctrl=True)
+  #   kmi.properties.export_all = True
+  #   kmi.properties.filepath = '//textures'
+  #   kmi = km.keymap_items.new('uv.align', 'W', 'PRESS', shift=True)
+  #   kmi.properties.axis = 'ALIGN_AUTO'
+
+  #   addon_keymaps.append([km,kmi])
+
+  #   # Map Sculpt
+  #   km = kc.keymaps.new('Sculpt', space_type='EMPTY', region_type='WINDOW', modal=False)
+  #   kmi = km.keymap_items.new('wm.context_toggle', 'X', 'PRESS', alt=True)
+  #   kmi.properties.data_path = 'tool_settings.sculpt.use_symmetry_x'
+  #   kmi = km.keymap_items.new('wm.call_menu_pie', 'W', 'PRESS')
+  #   kmi.properties.name = "paint.pie_brush"
+
+  #   addon_keymaps.append([km,kmi])
+
+  #   #Image Paint
+  #   km = kc.keymaps.new('Image Paint', space_type='EMPTY', region_type='WINDOW', modal=False)
+  #   kmi = km.keymap_items.new('wm.call_menu_pie', 'W', 'PRESS')
+  #   kmi.properties.name = "paint.pie_brush"
+
+  #   addon_keymaps.append([km,kmi])
+
+
+  # del bpy.types.Screen.uet_expanded
+  # del bpy.types.Screen.grg_expanded
+  # del bpy.types.Screen.ht_expanded
+  # del bpy.types.WindowManager.copyrefgeometryProps
 
 if __name__ == "__main__":
   register()
+

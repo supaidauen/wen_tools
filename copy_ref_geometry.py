@@ -22,33 +22,31 @@ from bpy.props import IntProperty,BoolProperty
 class crmProps(bpy.types.PropertyGroup):
   '''Class for the Properties'''
 
-  p_change = IntProperty(name="Percent Change",
+  p_change: IntProperty(name="Percent Change",
     description="Percent of change between two meshes.",
     default=100, step=1, min=0, max=100)
 
-  selected_verts = BoolProperty(name="Only Selected",
+  selected_verts: BoolProperty(name="Only Selected",
     description="Use only selected verts.",
     default=False)
 
-  create_dup = BoolProperty(name="Create Dup",
+  create_dup: BoolProperty(name="Create Dup",
     description="Creates a duplicate of the active object.",
     default=False)
 
-  create_shape_key = BoolProperty(name="Create Shape Key",
+  create_shape_key: BoolProperty(name="Create Shape Key",
     description="Creates a shape key in the active object of the selected object.",
     default=False)
 
-  copy_material = BoolProperty(name="Copy Material",
+  copy_material: BoolProperty(name="Copy Material",
     description="Copies the Selected objects material onto the Active or the Duplicate.",
     default=False)
 
-  shrinkwrap = BoolProperty(name="Shrinkwrap",
+  shrinkwrap: BoolProperty(name="Shrinkwrap",
     description="Shrinkwraps unaffected vertices.",
     default=False)
 
-
-
-class Copy_Reference_Mesh_Geometry(bpy.types.Operator):
+class OBJECT_OT_Copy_Reference_Mesh_Geometry(bpy.types.Operator):
   '''Copy Reference Mesh Geometry.  Meshes Must have similar topology'''
 
   bl_idname = "object.copy_vert_loc_from_ref"
@@ -205,3 +203,8 @@ def set_material(ob_to, ob_from):
   for ob_to_mat,ob_from_mat in zip(ob_to.material_slots,ob_from.material_slots):
       ob_to_mat.material = ob_from_mat.material
   return
+
+classes = (
+  OBJECT_OT_Copy_Reference_Mesh_Geometry,
+)
+register, unregister = bpy.utils.register_classes_factory(classes)

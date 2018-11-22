@@ -2,7 +2,7 @@ import bpy
 
 print("######### Script Starting #########")
 
-class Flatten_to_UV(bpy.types.Operator):
+class OBJECT_OT_Flatten_to_UV(bpy.types.Operator):
   '''Flatten to UV and back'''
 
   bl_idname = "object.flatten_to_uv"
@@ -18,7 +18,6 @@ class Flatten_to_UV(bpy.types.Operator):
     ob = bpy.context.active_object
     flatten_to_uv_co(ob)
     return {'FINISHED'}
-
 
 def flatten_to_uv_co(ob):
   c = ob

@@ -78,7 +78,7 @@ def check_selected_layer(arm, layer_idx, context):
 
   return is_sel
 
-class Pose_Rest_Toggle(bpy.types.Operator):
+class OBJECT_OT_Pose_Rest_Toggle(bpy.types.Operator):
   '''Pose/Rest Toggle'''
 
   bl_idname = "pose.pose_rest_toggle"
@@ -112,3 +112,8 @@ class VIEW_3D_PT_Bone_Tools(bpy.types.Panel):
     row.prop(context.active_object.data, "layers", toggle=True, text='')
     row = column.row(align=True)
 
+classes = (
+  OBJECT_OT_Pose_Rest_Toggle,
+  VIEW_3D_PT_Bone_Tools
+)
+register, unregister = bpy.utils.register_classes_factory(classes)
