@@ -130,22 +130,37 @@ def process_mesh(dup,
 
   if ob_act.data.shape_keys and s_verts:
     for ob_act_keys,ob_sel_keys in zip(ob_act.data.shape_keys.key_blocks,
-                       ob_sel.data.shape_keys.key_blocks):
+                                       ob_sel.data.shape_keys.key_blocks):
       ob_act_verts = ob_act_keys.data
       ob_sel_verts = ob_sel_keys.data
-      move_verts(ob_act.data.vertices,ob_act_verts,ob_sel_verts,s_verts,p_change,ob_act)
+      move_verts(
+        ob_act.data.vertices,
+        ob_act_verts,
+        ob_sel_verts,
+        s_verts,
+        p_change,ob_act
+        )
 
   else:
     ob_act_verts = ob_act.data.vertices
     ob_sel_verts = ob_sel.data.vertices
-    move_verts(ob_act_verts,ob_act_verts,ob_sel_verts,s_verts,p_change,ob_act)
+    move_verts(
+      ob_act_verts,
+      ob_act_verts,
+      ob_sel_verts,
+      s_verts,
+      p_change,
+      ob_act
+      )
 
-def move_verts(iterable,
-         ob_act_verts,
-         ob_sel_verts,
-         s_verts,
-         p_change,
-         ob_act):
+def move_verts(
+      iterable,
+      ob_act_verts,
+      ob_sel_verts,
+      s_verts,
+      p_change,
+      ob_act
+      ):
   cont = bpy.context
   def do_move(v1,v2):
     v1.co.x = ((v2.co.x - v1.co.x) * p_change) + v1.co.x

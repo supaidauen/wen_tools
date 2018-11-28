@@ -91,7 +91,7 @@ class OBJECT_OT_Prep_Hair_Object(bpy.types.Operator):
 
   hair_type_list = ["Thick","Mid","Thin"]
   hair_material_prefix: StringProperty(name='Hair Material Prefix', default='hair')
-  hair_export_object: StringProperty(name='Hair Export Object',default='HairNew')
+  hair_export_object: StringProperty(name='Hair Export Object', default='HairNew')
 
   def execute(self, context):
     hair_bodies = []

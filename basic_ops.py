@@ -265,7 +265,7 @@ class OBJECT_OT_Image_Save_Options(bpy.types.Operator):
     bl_description = "Better Image Save Options"
     bl_options = {'REGISTER', 'UNDO'}
     
-    filepath: bpy.props.StringProperty(name="File Path", description="Path where the image will be saved",maxlen=1024, default="")
+    filepath: bpy.props.StringProperty(name="File Path", description="Path where the image will be saved", maxlen=1024, default="")
     filter_folder: bpy.props.BoolProperty(name="Filter folders", description="", default=True, options={'HIDDEN'})
     # imageFileType: bpy.props.EnumProperty(items=[('PNG Save',)])
     

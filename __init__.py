@@ -74,8 +74,8 @@ class VIEW_3D_PT_WenToolsPanel(bpy.types.Panel):
     box = layout.box()
     col = box.column(align=True)
     col.alignment ='EXPAND'
-    col.operator("object.tidy_rename",text="Tidy Rename", icon='OBJECT_DATA')
-    col.operator("object.clear_mesh",text="Clear Mesh", icon='OBJECT_DATA')
+    col.operator("object.tidy_rename", text="Tidy Rename", icon='OBJECT_DATA')
+    col.operator("object.clear_mesh", text="Clear Mesh", icon='OBJECT_DATA')
     
     if context.mode in {'POSE','EDIT_ARMATURE'}:
       box = layout.box()
@@ -223,12 +223,12 @@ def register():
   for cls in classes:
     register_class(cls)
   #Register Properties
-  bpy.types.Scene.copyrefgeometryProps = bpy.props.PointerProperty(type = copy_ref_geometry.crmProps)
-  bpy.types.Scene.preparehairProps = bpy.props.PointerProperty(type = mesh_hair_tools.phProps)
-  bpy.types.Screen.uet_expanded= bpy.props.BoolProperty(default=False)
-  bpy.types.Screen.crg_expanded= bpy.props.BoolProperty(default=False)
-  bpy.types.Screen.ht_expanded= bpy.props.BoolProperty(default=False)
-  bpy.types.Screen.bt_expanded= bpy.props.BoolProperty(default=True)
+  bpy.types.Scene.copyrefgeometryProps = bpy.props.PointerProperty(type=copy_ref_geometry.crmProps)
+  bpy.types.Scene.preparehairProps = bpy.props.PointerProperty(type=mesh_hair_tools.phProps)
+  bpy.types.Screen.uet_expanded = bpy.props.BoolProperty(default=False)
+  bpy.types.Screen.crg_expanded = bpy.props.BoolProperty(default=False)
+  bpy.types.Screen.ht_expanded = bpy.props.BoolProperty(default=False)
+  bpy.types.Screen.bt_expanded = bpy.props.BoolProperty(default=True)
 
 def unregister():
   from bpy.utils import unregister_class
@@ -331,4 +331,3 @@ def unregister():
 
 if __name__ == "__main__":
   register()
-
