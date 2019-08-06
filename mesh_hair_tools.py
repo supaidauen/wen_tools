@@ -141,7 +141,11 @@ class OBJECT_OT_Prep_Hair_Object(bpy.types.Operator):
     return {'FINISHED'}
 
 import sys,inspect
-classes = (cls[1] for cls in inspect.getmembers(sys.modules[__name__], lambda member: inspect.isclass(member) and member.__module__ == __name__))
+classes = (
+OBJECT_OT_Prep_Hair_Movement,
+OBJECT_OT_Prep_Hair_Object,
+phProps,
+)
 
 def register():
   from bpy.utils import register_class

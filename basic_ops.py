@@ -17,6 +17,16 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
+from bpy.props import BoolProperty,EnumProperty
+
+def mods_cb(self, context):
+  ob = context.active_object
+  modifiers = ob.modifiers
+  mods = ((mod.name, mod.name, "Apply "+mod.type) for mod in modifiers)
+  return mods
+
+def update_mods_cb(self, context):
+  amum = context.scene.applymultiusermodifierprops
 
 class OBJECT_OT_Clear_Mesh(bpy.types.Operator):
   '''Clear Mesh'''
@@ -246,41 +256,104 @@ class OBJECT_OT_Pose_Rest_Toggle(bpy.types.Operator):
     else: cont.active_object.data.pose_position = 'POSE'
     return {'FINISHED'}
 
-class OBJECT_OT_Quick_Save(bpy.types.Operator):
-  '''Save Immediately'''
-
-  bl_idname = "wm.quick_save"
-  bl_label = "Quick Save"
+class OBJECT_OT_Image_Save_Options(bpy.types.Operator):
+  '''Image Save Options'''
+  
+  bl_idname = "save.image_save_options"
+  bl_label = "Image Save Options"
+  bl_description = "Better Image Save Options"
   bl_options = {'REGISTER', 'UNDO'}
   
+  filepath: bpy.props.StringProperty(name="File Path", description="Path where the image will be saved", maxlen=1024, default="")
+  filter_folder: bpy.props.BoolProperty(name="Filter folders", description="", default=True, options={'HIDDEN'})
+  # imageFileType: bpy.props.EnumProperty(items=[('PNG Save',)])
+  
   def execute(self, context):
-    bpy.ops.wm.save_mainfile(check_existing=False, compress=True,)
+    self.save_image()
+    return {'FINISHED'}
+  def invoke(self, context, event):
+    wm = context.window_manager.fileselect_add(self)
+    return {'RUNNING_MODAL'}
+  def save_image(self):
+    img = bpy.context.space_data.image
+    bpy.context.scene.render.image_settings.file_format = 'PNG'
+
+class amumProps(bpy.types.PropertyGroup):
+  keep_modifier: BoolProperty(
+    description="Keep copy of Modifier",
+    default=True
+  )
+  selected_modifier: EnumProperty(
+    items=mods_cb,
+    update=update_mods_cb,
+    description="Modifiers",
+    name="Modifiers"
+  )
+
+class OBJECT_OT_Apply_Multi_User_Modifier(bpy.types.Operator):
+  '''Apply Modifier to Mutli User Data'''
+
+  bl_idname = "object.apply_multi_user_modifier"
+  bl_label = "Apply Multi User Modifier"
+  bl_options = {'REGISTER', 'UNDO'}
+
+  @classmethod
+  def poll(cls, context):
+    return (context.active_object is not None and 
+            context.active_object.type == 'MESH')
+
+
+  def execute(self, context):
+    amum = context.scene.applymultiusermodifierprops
+    C = bpy.context
+    D = bpy.data
+    ob = C.active_object
+    obs_temp = []
+    temp = D.objects.data.meshes.new(name='temp')
+    keep_modifier = amum.keep_modifier
+    selected_modifier = amum.selected_modifier
+    name = ob.modifiers[selected_modifier].name
+    for obs in D.objects:
+      if obs.data == ob.data and obs != ob:
+        obs_temp.append(obs)
+        obs.data = temp
+    if keep_modifier:
+      old_modifiers = [modifier.name for modifier in ob.modifiers]
+      bpy.ops.object.modifier_copy(modifier=selected_modifier)
+      for modifier in ob.modifiers:
+        if modifier.name not in old_modifiers:
+          copy = modifier
+      bpy.ops.object.modifier_apply(modifier=selected_modifier)
+      copy.name = name
+    else:
+      bpy.ops.object.modifier_apply(modifier=selected_modifier)
+    for obs in obs_temp:
+        obs.data = ob.data
+    D.meshes.remove(temp)
     return {'FINISHED'}
 
-class OBJECT_OT_Image_Save_Options(bpy.types.Operator):
-    '''Image Save Options'''
-    
-    bl_idname = "save.image_save_options"
-    bl_label = "Image Save Options"
-    bl_description = "Better Image Save Options"
-    bl_options = {'REGISTER', 'UNDO'}
-    
-    filepath: bpy.props.StringProperty(name="File Path", description="Path where the image will be saved", maxlen=1024, default="")
-    filter_folder: bpy.props.BoolProperty(name="Filter folders", description="", default=True, options={'HIDDEN'})
-    # imageFileType: bpy.props.EnumProperty(items=[('PNG Save',)])
-    
-    def execute(self, context):
-        self.save_image()
-        return {'FINISHED'}
-    def invoke(self, context, event):
-        wm = context.window_manager.fileselect_add(self)
-        return {'RUNNING_MODAL'}
-    def save_image(self):
-        img = bpy.context.space_data.image
-        bpy.context.scene.render.image_settings.file_format = 'PNG'
-
+def empty_at_bone_tail():
+  ob = C.active_object
+  for b in ob.data.bones:
+      E = bpy.data.objects.new("E_"+b.name,None)
+      bpy.context.scene.collection.objects.link(E)
+      E.location = b.tail_local
+      E.empty_display_size = 1.0
+      E.parent = ob
+      E.show_in_front = True
+      
 import sys,inspect
-classes = (cls[1] for cls in inspect.getmembers(sys.modules[__name__], lambda member: inspect.isclass(member) and member.__module__ == __name__))
+classes = (
+OBJECT_OT_Clear_Mesh,
+OBJECT_OT_Image_Save_Options,
+OBJECT_OT_Pose_Rest_Toggle,
+OBJECT_OT_Quick_Bake,
+OBJECT_OT_Sculpt_Bake_Prep,
+OBJECT_OT_Sculpt_Export_Prep,
+OBJECT_OT_Tidy_Rename,
+OBJECT_OT_Apply_Multi_User_Modifier,
+amumProps,
+)
 
 def register():
   from bpy.utils import register_class

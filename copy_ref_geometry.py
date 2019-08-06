@@ -220,7 +220,10 @@ def set_material(ob_to, ob_from):
   return
 
 import sys,inspect
-classes = (cls[1] for cls in inspect.getmembers(sys.modules[__name__], lambda member: inspect.isclass(member) and member.__module__ == __name__))
+classes = (
+OBJECT_OT_Copy_Reference_Mesh_Geometry,
+crmProps,
+)
 
 def register():
   from bpy.utils import register_class

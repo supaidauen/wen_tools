@@ -261,7 +261,12 @@ class OBJECT_OT_Bake_Animations(bpy.types.Operator, ExportHelper):
     return { 'FINISHED' }
 
 import sys,inspect
-classes = (cls[1] for cls in inspect.getmembers(sys.modules[__name__], lambda member: inspect.isclass(member) and member.__module__ == __name__))
+classes = (
+OBJECT_OT_Bake_Animations,
+OBJECT_OT_Export_OBJ_to_BAKER,
+OBJECT_OT_Export_SM_to_UE4,
+OBJECT_OT_Import_OBJ_for_CAGE,
+)
 
 def register():
   from bpy.utils import register_class
