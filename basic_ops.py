@@ -345,18 +345,18 @@ class OBJECT_OT_Empty_At_Bone_Tail(bpy.types.Operator):
             context.active_object.type == 'ARMATURE')
 
   def execute(self,context):
+    def empty_at_bone_tail():
+      ob = context.active_object
+      for b in ob.data.bones:
+          E = bpy.data.objects.new("E_"+b.name,None)
+          bpy.context.scene.collection.objects.link(E)
+          E.location = b.tail_local
+          E.empty_display_size = 1.0
+          E.parent = ob
+          E.show_in_front = True
     empty_at_bone_tail()
     return {'FINISHED'}
 
-  def empty_at_bone_tail():
-    ob = C.active_object
-    for b in ob.data.bones:
-        E = bpy.data.objects.new("E_"+b.name,None)
-        bpy.context.scene.collection.objects.link(E)
-        E.location = b.tail_local
-        E.empty_display_size = 1.0
-        E.parent = ob
-        E.show_in_front = True
       
 import sys,inspect
 classes = (
