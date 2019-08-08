@@ -35,7 +35,7 @@ def do_fbx_export(self,actions):
   version = 'BIN7400',
   ui_tab = 'MAIN',
   use_selection = True,
-  global_scale = 1.0,
+  global_scale = 0.01,
   apply_unit_scale = True,
   bake_space_transform = False,
   object_types = {'MESH', 'ARMATURE'},

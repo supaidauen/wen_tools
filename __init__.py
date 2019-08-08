@@ -76,6 +76,7 @@ class VIEW_3D_PT_WenToolsPanel(bpy.types.Panel):
     col.alignment ='EXPAND'
     col.operator("object.tidy_rename", text="Tidy Rename", icon='OBJECT_DATA')
     col.operator("object.clear_mesh", text="Clear Mesh", icon='OBJECT_DATA')
+    col.operator("object.put_empty_at_bone_tail", text="Bone Empty", icon='OUTLINER_OB_ARMATURE')
     col.operator("object.apply_multi_user_modifier", text="Apply Multi User Modifier", icon='OBJECT_DATA')
     row = col.row()
     row.prop(amum, "keep_modifier", text="Keep Modifier")

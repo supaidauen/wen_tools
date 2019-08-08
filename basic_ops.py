@@ -332,15 +332,31 @@ class OBJECT_OT_Apply_Multi_User_Modifier(bpy.types.Operator):
     D.meshes.remove(temp)
     return {'FINISHED'}
 
-def empty_at_bone_tail():
-  ob = C.active_object
-  for b in ob.data.bones:
-      E = bpy.data.objects.new("E_"+b.name,None)
-      bpy.context.scene.collection.objects.link(E)
-      E.location = b.tail_local
-      E.empty_display_size = 1.0
-      E.parent = ob
-      E.show_in_front = True
+class OBJECT_OT_Empty_At_Bone_Tail(bpy.types.Operator):
+  '''Set Empty at Bone tail for Active Armature'''
+
+  bl_idname = "object.put_empty_at_bone_tail"
+  bl_label = "Apply Multi User Modifier"
+  bl_options = {'REGISTER', 'UNDO'}
+
+  @classmethod
+  def poll(cls, context):
+    return (context.active_object is not None and 
+            context.active_object.type == 'ARMATURE')
+
+  def execute(self,context):
+    empty_at_bone_tail()
+    return {'FINISHED'}
+
+  def empty_at_bone_tail():
+    ob = C.active_object
+    for b in ob.data.bones:
+        E = bpy.data.objects.new("E_"+b.name,None)
+        bpy.context.scene.collection.objects.link(E)
+        E.location = b.tail_local
+        E.empty_display_size = 1.0
+        E.parent = ob
+        E.show_in_front = True
       
 import sys,inspect
 classes = (
@@ -353,6 +369,7 @@ OBJECT_OT_Sculpt_Export_Prep,
 OBJECT_OT_Tidy_Rename,
 OBJECT_OT_Apply_Multi_User_Modifier,
 amumProps,
+OBJECT_OT_Empty_At_Bone_Tail,
 )
 
 def register():
