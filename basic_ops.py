@@ -336,7 +336,7 @@ class OBJECT_OT_Empty_At_Bone_Tail(bpy.types.Operator):
   '''Set Empty at Bone tail for Active Armature'''
 
   bl_idname = "object.put_empty_at_bone_tail"
-  bl_label = "Apply Multi User Modifier"
+  bl_label = "Empty at Bone Tail"
   bl_options = {'REGISTER', 'UNDO'}
 
   @classmethod
@@ -347,14 +347,42 @@ class OBJECT_OT_Empty_At_Bone_Tail(bpy.types.Operator):
   def execute(self,context):
     def empty_at_bone_tail():
       ob = context.active_object
+      E = bpy.data.objects.new("E_"+ob.name,None)
+      bpy.context.scene.collection.objects.link(E)
+      E.location = ob.location
+      E.empty_display_size = 0.01
+      E.show_in_front = True
+      parent = E
       for b in ob.data.bones:
-          E = bpy.data.objects.new("E_"+b.name,None)
-          bpy.context.scene.collection.objects.link(E)
-          E.location = b.tail_local
-          E.empty_display_size = 1.0
-          E.parent = ob
-          E.show_in_front = True
+        E = bpy.data.objects.new("E_"+b.name,None)
+        bpy.context.scene.collection.objects.link(E)
+        E.location = b.tail_local
+        E.empty_display_size = 0.01
+        E.parent = parent
+        E.show_in_front = True
     empty_at_bone_tail()
+    return {'FINISHED'}
+
+class OBJECT_OT_Origin_to_world_center(bpy.types.Operator):
+  '''Sets selected objects origins to world center'''
+
+  bl_idname = "object.set_origin_to_world_center"
+  bl_label = "Set Object Origin to world center"
+  bl_options = {'REGISTER', 'UNDO'}
+
+  @classmethod
+  def poll(cls, context):
+    return (context.active_object is not None)
+
+  def execute(self,context):
+    def get_cursor_location():
+      location = bpy.context.scene.cursor.location
+      return (location.x,location.y,location.z)
+    from mathutils import Vector
+    original_location = get_cursor_location()
+    bpy.context.scene.cursor.location = Vector((0.0,0.0,0.0))
+    bpy.ops.object.origin_set(type='ORIGIN_CURSOR', center='MEDIAN')
+    bpy.context.scene.cursor.location = Vector(original_location)
     return {'FINISHED'}
 
       
@@ -370,6 +398,7 @@ OBJECT_OT_Tidy_Rename,
 OBJECT_OT_Apply_Multi_User_Modifier,
 amumProps,
 OBJECT_OT_Empty_At_Bone_Tail,
+OBJECT_OT_Origin_to_world_center,
 )
 
 def register():
