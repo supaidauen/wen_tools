@@ -30,26 +30,24 @@ bl_info = {
 
 bpydoc = '''Tools and keymaps to aid in content/character creation'''
 
-import importlib
+import os
+_modules = sorted([name[:-3] \
+  for name in os.listdir(os.path.join(__path__[0], ".")) \
+    if name.endswith('.py') \
+    and "__init__" not in name])
 
-libs = (
-  ".basic_ops",
-  ".copy_ref_geometry",
-  ".mesh_hair_tools",
-  ".ue4_tools",
-)
+if "bpy" in locals():
+    from importlib import reload
+    _modules_loaded[:] = [reload(module) for module in _modules_loaded]
+    del reload
 
-if not 'bpy' in locals():
-  modules = []
-  import bpy
-  for lib in libs:
-    i = importlib.import_module(lib, package="wen_tools")
-    modules.append(i)
-    i.register()
-else:
-  for i in modules:
-    importlib.reload(i)
-    i.unregister()
+__import__(name=__name__, fromlist=_modules)
+_namespace = globals()
+_modules_loaded = [_namespace[name] for name in _modules]
+for module in _modules_loaded: module.register()
+del _namespace
+
+import bpy
 
 class VIEW_3D_PT_WenToolsPanel(bpy.types.Panel):
   '''Wen Tools Panel'''
@@ -66,52 +64,12 @@ class VIEW_3D_PT_WenToolsPanel(bpy.types.Panel):
 
   def draw(self, context):
     scene = context.scene
-    screen = context.screen
     crg = scene.copyrefgeometryProps
     php = scene.preparehairProps
+    amum = scene.amumProps
     layout = self.layout
-    amum = context.scene.applymultiusermodifierprops
-    box = layout.box()
-    col = box.column(align=True)
-    col.alignment ='EXPAND'
-    col.operator("object.tidy_rename", text="Tidy Rename", icon='OBJECT_DATA')
-    col.operator("object.clear_mesh", text="Clear Mesh", icon='OBJECT_DATA')
-    col.operator("object.set_origin_to_world_center", text="Origin to Center", icon='OBJECT_DATA')
-    col.operator("object.put_empty_at_bone_tail", text="Bone Empty", icon='OUTLINER_OB_ARMATURE')
-    col.operator("object.apply_multi_user_modifier", text="Apply Multi User Modifier", icon='OBJECT_DATA')
-    row = col.row()
-    row.prop(amum, "keep_modifier", text="Keep Modifier")
-    row = col.row()
-    row.prop(amum, "selected_modifier", text="", emboss=True)
-    
-    if context.mode in {'POSE','EDIT_ARMATURE'}:
-      box = layout.box()
-      col.alignment ='EXPAND'
-      column = box.column(align = True)
-      column.label(text="Bone Layers")
-      row = column.row(align=True)
-      row.alignment = 'EXPAND'
-      row.prop(context.active_object.data, "layers", toggle=True, text='')
-      row = column.row(align=True)
 
-    # See bottom for registration of properties
-    box = layout.box()
-    row = box.row(align=True)
-    row.alignment = 'EXPAND'
-    row.operator("object.copy_vert_loc_from_ref", text="Copy Reference Geometry", icon='MESH_DATA')
-    row.prop(screen, "crg_expanded",
-        icon = "TRIA_DOWN" if screen.crg_expanded else "TRIA_RIGHT",
-        icon_only = True, emboss = True
-        )
-    if screen.crg_expanded:
-      col = box.column(align=True)
-      col.prop(crg, "p_change", text='Percent Change')
-      col.prop(crg, "selected_verts", text='Use Only Selected')
-      col.prop(crg, "create_dup", text='Create Duplicate')
-      col.prop(crg, "copy_material", text='Copy Material')
-      col.prop(crg, "create_shape_key", text='Shape Key')
-      col.prop(crg, "shrinkwrap", text='Shrinkwrap')
-
+    screen = context.screen
     # See bottom for registration of properties
     box = layout.box()
     row = box.row(align=True)
@@ -129,21 +87,86 @@ class VIEW_3D_PT_WenToolsPanel(bpy.types.Panel):
       col.operator("object.import_obj_quick", text="Import OBJ", icon='GROUP')
 
     #See bottom for registration of properties
+    if context.mode in {'OBJECT'} and hasattr(context.active_object, "name") and 'hair' in context.active_object.name.lower():
+      box = layout.box()
+      col = box.column(align=True)
+      row = col.row(align=True)
+      hair = row.operator("object.prep_hair_object", text="Prepare Hair", icon='MESH_DATA')
+      row.prop(screen, "ht_expanded",
+          icon = "TRIA_DOWN" if screen.ht_expanded else "TRIA_RIGHT",
+          icon_only = True, emboss = True
+          )
+      if screen.ht_expanded:
+        col.alignment = 'EXPAND'
+        col.prop(php, "hair_material_prefix",text='')
+        col.prop(php, "hair_export_object",text='')
+        hair.hair_material_prefix = php.hair_material_prefix
+        hair.hair_export_object = php.hair_export_object
+      col.operator("object.prep_hair_movement", text="Prepare Hair Movement", icon='ARMATURE_DATA')
+
     box = layout.box()
     col = box.column(align=True)
-    row = col.row(align=True)
-    hair = row.operator("object.prep_hair_object", text="Prepare Hair", icon='MESH_DATA')
-    row.prop(screen, "ht_expanded",
-        icon = "TRIA_DOWN" if screen.ht_expanded else "TRIA_RIGHT",
-        icon_only = True, emboss = True
-        )
-    if screen.ht_expanded:
+    col.alignment ='EXPAND'
+    col.operator("object.tidy_rename", text="Tidy Rename", icon='OBJECT_DATA')
+    col.operator("object.set_origin_to_world_center", text="Origin to Center", icon='OBJECT_DATA')
+    col.operator("object.merge_to_mesh", text="Merge to Mesh", icon='MESH_DATA')
+    # col.operator("object.put_empty_at_bone_tail", text="Bone Empty", icon='OUTLINER_OB_ARMATURE')
+
+    if context.mode in {'OBJECT'} and context.active_object.type == 'MESH':
+      box = layout.box()
+      col = box.column(align=False)
+      col.alignment ='EXPAND'
+      col.operator("object.clear_mesh", text="Clear Mesh", icon='OBJECT_DATA')
+      col = box.column(align=True)
+      col.alignment ='EXPAND'
+      col.label(text='Multi User Modifier:')
+      col.operator("object.apply_multi_user_modifier", text="Apply", icon='OBJECT_DATA')
+      row = col.row(align=True)
+      row.alignment = 'EXPAND'
+      row.prop(amum, "selected_modifier", text="", emboss=True)
+      row.prop(amum, "keep_modifier", text="Keep")
+      col = box.column(align=True)
       col.alignment = 'EXPAND'
-      col.prop(php, "hair_material_prefix",text='')
-      col.prop(php, "hair_export_object",text='')
-      hair.hair_material_prefix = php.hair_material_prefix
-      hair.hair_export_object = php.hair_export_object
-    col.operator("object.prep_hair_movement", text="Prepare Hair Movement", icon='ARMATURE_DATA')
+      row = col.row(align=True)
+      row.operator("object.copy_vert_loc_from_ref", text="Copy Reference Geometry", icon='MESH_DATA')
+      row.prop(screen, "crg_expanded",
+          icon = "TRIA_DOWN" if screen.crg_expanded else "TRIA_RIGHT",
+          icon_only = True, emboss = True
+          )
+      if screen.crg_expanded:
+        col = box.column(align=True)
+        col.prop(crg, "p_change", text='Percent Change')
+        col.prop(crg, "selected_verts", text='Use Only Selected')
+        col.prop(crg, "create_dup", text='Create Duplicate')
+        col.prop(crg, "copy_material", text='Copy Material')
+        col.prop(crg, "create_shape_key", text='Shape Key')
+        col.prop(crg, "shrinkwrap", text='Shrinkwrap')
+
+    if context.mode in {'PAINT_WEIGHT'} and context.active_object.type == 'MESH':
+      box = layout.box()
+      col = box.column(align=True)
+      col.alignment ='EXPAND'
+      col.label(text="Vertex Weights:")
+      row = col.row(align=True)
+      row.operator("object.set_paint_weight", text='1.00').weight_amt = 1.00
+      row.operator("object.set_paint_weight", text='0.75').weight_amt = 0.75
+      row.operator("object.set_paint_weight", text='0.66').weight_amt = 0.66
+      row.operator("object.set_paint_weight", text='0.50').weight_amt = 0.50
+      row = col.row(align=True)
+      row.operator("object.set_paint_weight", text='0.33').weight_amt = 0.33
+      row.operator("object.set_paint_weight", text='0.25').weight_amt = 0.25
+      row.operator("object.set_paint_weight", text='0.10').weight_amt = 0.10
+      row.operator("object.set_paint_weight", text='0.00').weight_amt = 0.00
+    
+    if context.mode in {'POSE','EDIT_ARMATURE'}:
+      box = layout.box()
+      col = box.column(align=True)
+      col.alignment ='EXPAND'
+      col.label(text="Bone Layers:")
+      row = col.row(align=True)
+      row.alignment = 'EXPAND'
+      row.prop(context.active_object.data, "layers", toggle=True, text='')
+      row = col.row(align=True)
 
     # See bottom for registration of properties
     if context.scene.render.engine == 'CYCLES':
@@ -230,15 +253,15 @@ VIEW_3D_PT_WenToolsPanel,
 def register():
   from bpy.utils import register_class
   for cls in classes:
-    register_class(cls)
+    register_class(cls) 
   # Register Properties
   bpy.types.Scene.copyrefgeometryProps = bpy.props.PointerProperty(type=copy_ref_geometry.crmProps)
   bpy.types.Scene.preparehairProps = bpy.props.PointerProperty(type=mesh_hair_tools.phProps)
-  bpy.types.Scene.applymultiusermodifierprops = bpy.props.PointerProperty(type=basic_ops.amumProps)
+  bpy.types.Scene.amumProps = bpy.props.PointerProperty(type=basic_ops.amumProps)
   bpy.types.Screen.uet_expanded = bpy.props.BoolProperty(default=False)
   bpy.types.Screen.crg_expanded = bpy.props.BoolProperty(default=False)
   bpy.types.Screen.ht_expanded = bpy.props.BoolProperty(default=False)
-  bpy.types.Screen.bt_expanded = bpy.props.BoolProperty(default=True)
+  bpy.types.Screen.bt_expanded = bpy.props.BoolProperty(default=False)
 
 def unregister():
   from bpy.utils import unregister_class
@@ -246,7 +269,7 @@ def unregister():
     unregister_class(cls)
   del bpy.types.Scene.copyrefgeometryProps
   del bpy.types.Scene.preparehairProps
-  del bpy.types.Scene.applymultiusermodifierprops
+  del bpy.types.Scene.applymultiusermodifierProps
   del bpy.types.Scene.dyn_list
   del bpy.types.Screen.uet_expanded
   del bpy.types.Screen.crg_expanded

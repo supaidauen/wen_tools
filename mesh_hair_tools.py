@@ -51,13 +51,13 @@ def prep_hair_object():
     o = bpy.data.objects.new(ob.name, me)
     scn.objects.link(o)
     o.matrix_world = ob.matrix_world
-    o.select = True
+    o.select_set(True)
     bpy.context.scene.objects.active = o
     return 
 
   for ob in bpy.context.selected_objects:
     make_mesh(ob)
-    ob.select = False
+    ob.select_set(False)
   return
 
 class phProps(bpy.types.PropertyGroup):
@@ -99,9 +99,9 @@ class OBJECT_OT_Prep_Hair_Object(bpy.types.Operator):
       hair_material_index = self.hair_type_list.index(i)
       hair_material_suffix = str(hair_material_index).zfill(3)
       for ob in bpy.data.objects:
-        ob.select = False
+        ob.select_set(False)
         if ob.active_material and ob.active_material.name == self.hair_material_prefix+"."+hair_material_suffix:
-          ob.select = True
+          ob.select_set(True)
       if not len(bpy.context.selected_objects):
         continue
       prep_hair_object()
@@ -111,32 +111,32 @@ class OBJECT_OT_Prep_Hair_Object(bpy.types.Operator):
       hair_bodies.append(hair)
       vg = hair.vertex_groups.new("head")
       for v in hair.data.vertices:
-        v.select = True
+        v.select_set(True)
         vg.add([v.index], 1.0, "ADD")
       vg = hair.vertex_groups.new(i)
       for v in hair.data.vertices:
-        v.select = True
+        v.select_set(True)
         vg.add([v.index], 1.0, "ADD")
       bpy.ops.object.mode_set(mode='EDIT')
       prep_hair_uv((hair_material_index-1)*0.333)
       bpy.ops.object.mode_set(mode='OBJECT')
     for hair in hair_bodies:
-      hair.select = True
+      hair.select_set(True)
     bpy.ops.object.join()
     hair = bpy.context.active_object
     hair.data.materials.clear()
     hair.name = "_HairNew_"
-    hair.layers[1] = True
-    hair.layers[0] = False
-    scn = bpy.context.scene
-    scn.layers = hair.layers
+    # hair.layers[1] = True
+    # hair.layers[0] = False
+    # scn = bpy.context.scene
+    # scn.layers = hair.layers
     hair_export = bpy.data.objects[self.hair_export_object]
     bpy.context.scene.objects.active = hair_export
     for ob in bpy.data.objects:
-      ob.select = False
-    hair_export.select = True
+      ob.select_set(False)
+    hair_export.select_set(True)
     bpy.ops.object.clear_mesh()
-    hair.select = True
+    hair.select_set(True)
     bpy.ops.object.join()
     return {'FINISHED'}
 

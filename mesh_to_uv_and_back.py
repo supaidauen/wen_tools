@@ -1,7 +1,5 @@
 import bpy
 
-print("######### Script Starting #########")
-
 class OBJECT_OT_Flatten_to_UV(bpy.types.Operator):
   '''Flatten to UV and back'''
 
@@ -46,4 +44,8 @@ def flatten_to_uv_co(ob):
   bpy.ops.object.shape_key_add(from_mix=False)
   print("Added Morphed shapekey")
 
-  print("######### Script Complete #########")
+
+def register():
+  return
+def unregister():
+  return

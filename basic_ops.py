@@ -17,16 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
-from bpy.props import BoolProperty,EnumProperty
-
-def mods_cb(self, context):
-  ob = context.active_object
-  modifiers = ob.modifiers
-  mods = ((mod.name, mod.name, "Apply "+mod.type) for mod in modifiers)
-  return mods
-
-def update_mods_cb(self, context):
-  amum = context.scene.applymultiusermodifierprops
+from bpy.props import BoolProperty,EnumProperty,FloatProperty
 
 class OBJECT_OT_Clear_Mesh(bpy.types.Operator):
   '''Clear Mesh'''
@@ -93,13 +84,13 @@ class OBJECT_OT_Sculpt_Bake_Prep(bpy.types.Operator):
     if 'baker' not in data.objects:
       baker = ob.copy()
       baker.name = 'baker'
-      baker.data =  ob.to_mesh(scn, True, 'PREVIEW')
+      baker.data =  ob.to_mesh(preserve_all_data_layers=True, depsgraph='PREVIEW')
       baker.animation_data_clear()
       baker.modifiers.clear()
       scn.objects.link(baker)
     else:
       baker = data.objects['baker']
-      baker.data = ob.to_mesh(scn, True, 'PREVIEW')
+      baker.data = ob.to_mesh(preserve_all_data_layers=True, depsgraph='PREVIEW')
 
     if 'cage' not in data.objects:
       cage = ob.copy()
@@ -121,16 +112,16 @@ class OBJECT_OT_Sculpt_Bake_Prep(bpy.types.Operator):
     cage.data.materials.clear()
     cont.scene.objects.active = baker
     
-    for i in range(len(scn.layers)):
-      if i in [5]:
-        baker.layers[i] = True
-        cage.layers[i] = True
-      else:
-        baker.layers[i] = False
-        cage.layers[i] = False
+    # for i in range(len(scn.layers)):
+    #   if i in [5]:
+    #     baker.layers[i] = True
+    #     cage.layers[i] = True
+    #   else:
+    #     baker.layers[i] = False
+    #     cage.layers[i] = False
 
-    baker.layers[scn.active_layer] = False
-    cage.layers[scn.active_layer] = False
+    # baker.layers[scn.active_layer] = False
+    # cage.layers[scn.active_layer] = False
 
     for v in cage.data.vertices:
       v.co += v.normal * 0.4
@@ -138,14 +129,14 @@ class OBJECT_OT_Sculpt_Bake_Prep(bpy.types.Operator):
     cagewrap = cage.modifiers.new("Shrinkwrap",'Shrinkwrap'.upper())
     cagewrap.target = data.objects[cageref]
     cagewrap.use_keep_above_surface = True
-    cage.data = cage.to_mesh(scn, True, 'PREVIEW')
+    cage.data = cage.to_mesh(preserve_all_data_layers=True, depsgraph='PREVIEW')
     cage.data.name = 'cage'
     cage.modifiers.remove(cagewrap)
 
-    cage.select = False
-    ob.select = False
-    sculpt.select = True
-    baker.select = True
+    cage.select_set(False)
+    ob.select_set(False)
+    sculpt.select_set(True)
+    baker.select_set(True)
     scn.update()
 
     scn.update()
@@ -204,17 +195,17 @@ class OBJECT_OT_Quick_Bake(bpy.types.Operator):
       
       if cscene.bake_type == 'NORMAL':
         scene.render.bake.use_selected_to_active = True
-        nodes['T_N'].select = True
+        nodes['T_N'].select_set(True)
         nodes.active = nodes['T_N']
 
       elif cscene.bake_type == 'AO':
         scene.render.bake.use_selected_to_active = True
-        nodes['T_AO'].select = True
+        nodes['T_AO'].select_set(True)
         nodes.active = nodes['T_AO']
         
       elif cscene.bake_type == 'EMIT':
         scene.render.bake.use_selected_to_active = False
-        nodes['T_D'].select = True
+        nodes['T_D'].select_set(True)
         nodes.active = nodes['T_D']
 
     bpy.ops.object.bake(type=cscene.bake_type)
@@ -278,6 +269,16 @@ class OBJECT_OT_Image_Save_Options(bpy.types.Operator):
     img = bpy.context.space_data.image
     bpy.context.scene.render.image_settings.file_format = 'PNG'
 
+def mods_cb(self, context):
+  ob = context.active_object
+  modifiers = ob.modifiers
+  mods = ((mod.name, mod.name, "Apply "+mod.type) for mod in modifiers)
+  return mods
+
+def update_mods_cb(self, context):
+  amum = context.scene.amumProps
+  return amum
+
 class amumProps(bpy.types.PropertyGroup):
   keep_modifier: BoolProperty(
     description="Keep copy of Modifier",
@@ -302,9 +303,8 @@ class OBJECT_OT_Apply_Multi_User_Modifier(bpy.types.Operator):
     return (context.active_object is not None and 
             context.active_object.type == 'MESH')
 
-
   def execute(self, context):
-    amum = context.scene.applymultiusermodifierprops
+    amum = context.scene.amumProps
     C = bpy.context
     D = bpy.data
     ob = C.active_object
@@ -385,7 +385,76 @@ class OBJECT_OT_Origin_to_world_center(bpy.types.Operator):
     bpy.context.scene.cursor.location = Vector(original_location)
     return {'FINISHED'}
 
-      
+class OBJECT_OT_Set_Paint_Weight(bpy.types.Operator):
+  '''Sets weight in Vertex Weight Paint Mode'''
+
+  bl_idname = "object.set_paint_weight"
+  bl_label = "Set weight amount"
+  bl_options = {'REGISTER', 'UNDO'}
+
+  weight_amt: FloatProperty(
+    name="Weight Amount",
+    description="Weight Amount",
+    default=0.0
+  )
+
+  @classmethod
+  def poll(cls, context):
+    return (context.active_object is not None and
+            context.active_object.type == 'MESH' and
+            context.mode == 'PAINT_WEIGHT')
+
+  def execute(self,context):
+    bpy.context.tool_settings.unified_paint_settings.weight = self.weight_amt
+    bpy.context.tool_settings.weight_paint.brush.weight = self.weight_amt
+    return {'FINISHED'}
+
+class OBJECT_OT_Merge_to_Mesh(bpy.types.Operator):
+  '''Merges Selected Objects to a single mesh'''
+
+  bl_idname = "object.merge_to_mesh"
+  bl_label = "Merge to Mesh"
+  bl_options = {'REGISTER', 'UNDO'}
+
+  def execute(self,context):
+    C = bpy.context
+    D = bpy.data
+    name = C.active_object.name
+    scn = C.scene
+    obs = C.selected_objects
+    meshes = []
+    for ob in obs:
+      if hasattr(ob.data, "use_uv_as_generated"):
+        ob.data.use_uv_as_generated = True
+      depsgraph = context.evaluated_depsgraph_get()
+      ob_eval = ob.evaluated_get(depsgraph)
+      mesh = D.meshes.new_from_object(ob_eval)
+      ob.select_set(False)
+      mesh.name = ob.name+"_temp"
+      new_object = D.objects.new(ob.name+"_temp", mesh)
+      C.view_layer.active_layer_collection.collection.objects.link(new_object)
+      new_object.select_set(True)
+      meshes.append(new_object)
+      try:
+        new_object.data.uv_layers[0].name = "UVMap"
+      except IndexError:
+        self.report({'ERROR'}, "All objects must have at least one UV...\n(For curves check 'Use UV for mapping')")
+        for mesh in meshes:
+          D.objects.remove(mesh)
+        return {'CANCELLED'}
+      finally:
+        "moving along"
+    ctx = {}
+    active_object = meshes[0]
+    ctx['object'] = ctx['active_object'] = active_object
+    ctx['selected_objects'] = ctx['selectable_editable_objects'] = meshes
+    bpy.ops.object.join(ctx)
+    active_object.name = name + "_joined"
+    bpy.context.view_layer.objects.active = active_object
+    C.view_layer.objects.update()
+
+    return {'FINISHED'}
+
 import sys,inspect
 classes = (
 OBJECT_OT_Clear_Mesh,
@@ -396,9 +465,11 @@ OBJECT_OT_Sculpt_Bake_Prep,
 OBJECT_OT_Sculpt_Export_Prep,
 OBJECT_OT_Tidy_Rename,
 OBJECT_OT_Apply_Multi_User_Modifier,
-amumProps,
 OBJECT_OT_Empty_At_Bone_Tail,
 OBJECT_OT_Origin_to_world_center,
+OBJECT_OT_Set_Paint_Weight,
+amumProps,
+OBJECT_OT_Merge_to_Mesh,
 )
 
 def register():

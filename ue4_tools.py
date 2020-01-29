@@ -137,15 +137,15 @@ class OBJECT_OT_Export_SM_to_UE4(bpy.types.Operator, ExportHelper):
     for ob in obs:
       old_parent = ob.parent
       ob.parent = ue4_arm
-      ob.select = True
+      ob.select_set(True)
 
-    for i in range(len(scn.layers)):
-      if ue4_arm.layers[i] == True:
-        if old_arm.layers[i] == False:
-          cont.scene.layers[i] = True
-          layers.append(i)
+    # for i in range(len(scn.layers)):
+    #   if ue4_arm.layers[i] == True:
+    #     if old_arm.layers[i] == False:
+    #       cont.scene.layers[i] = True
+    #       layers.append(i)
 
-    ue4_arm.select = True
+    ue4_arm.select_set(True)
     cont.scene.objects.active = ue4_arm
     if "act.rest_pose" in bpy.data.actions:
       cont.active_object.animation_data.action = bpy.data.actions["act.rest_pose"]
@@ -156,14 +156,14 @@ class OBJECT_OT_Export_SM_to_UE4(bpy.types.Operator, ExportHelper):
 
     for ob in obs:
       ob.parent = old_parent
-      ob.select = True
+      ob.select_set(True)
 
     if ue4_arm != old_arm:
-      ue4_arm.select = False
-      old_arm.select = True
+      ue4_arm.select_set(False)
+      old_arm.select_set(True)
 
-    for i in layers:
-      cont.scene.layers[i] = False
+    # for i in layers:
+    #   cont.scene.layers[i] = False
 
     cont.scene.update()
     return {'FINISHED'}
@@ -241,26 +241,25 @@ class OBJECT_OT_Bake_Animations(bpy.types.Operator, ExportHelper):
 
     cont.scene.frame_set(keyframes[0])
 
-    for i in range(0,20):
-      if ue4_arm.layers[i] == True:
-        cont.scene.layers[i] = True
-        layers.append(i)
+    # for i in range(0,20):
+    #   if ue4_arm.layers[i] == True:
+    #     cont.scene.layers[i] = True
+    #     layers.append(i)
 
     cont.scene.objects.active = ue4_arm
-    arm.select = False
-    ue4_arm.select = True
+    arm.select_set(False)
+    ue4_arm.select_set(True)
     cont.active_object.animation_data.action = current_anim
 
     do_fbx_export(self,True)
 
-    for i in layers:
-      cont.scene.layers[i] = False
+    # for i in layers:
+    #   cont.scene.layers[i] = False
 
     cont.scene.objects.active = arm
 
     return { 'FINISHED' }
 
-import sys,inspect
 classes = (
 OBJECT_OT_Bake_Animations,
 OBJECT_OT_Export_OBJ_to_BAKER,

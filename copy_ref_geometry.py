@@ -169,15 +169,15 @@ def move_verts(
   p_change = p_change*0.01
   if ob_act.data.shape_keys:
     for ob in bpy.context.selected_objects:
-      ob.select = False
-    ob_act.select = True
+      ob.select_set(False)
+    ob_act.select_set(True)
     bpy.ops.object.duplicate()
     for ob in cont.selected_objects:
       if ob != ob_act:
         ob_proxy = ob
     for ob in bpy.context.selected_objects:
-      ob.select = False
-    ob_act.select = True
+      ob.select_set(False)
+    ob_act.select_set(True)
     bpy.context.scene.objects.active = ob_act
     bpy.ops.object.shape_key_remove(all=True)
     for i,v1,v2 in zip(iterable,ob_act_verts,ob_sel_verts):
@@ -186,19 +186,19 @@ def move_verts(
           do_move(v1,v2)
       else:
         do_move(v1,v2)
-    ob_proxy.select = True
+    ob_proxy.select_set(True)
     for i in range(0,len(ob_proxy.data.shape_keys.key_blocks)):
       if i:
         ob_proxy.active_shape_key_index = i
         bpy.ops.object.shape_key_transfer()
     for ob in bpy.context.selected_objects:
-      ob.select = False
-    ob_proxy.select = True
+      ob.select_set(False)
+    ob_proxy.select_set(True)
     bpy.ops.object.delete(use_global=True)
     for i in bpy.data.meshes:
       if not i.users:
         bpy.data.meshes.remove(i)
-    ob_act.select = True
+    ob_act.select_set(True)
     bpy.context.scene.objects.active = ob_act
     return(True)
   else:
