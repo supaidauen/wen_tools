@@ -17,12 +17,12 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
-from bpy.props import IntProperty,BoolProperty
+from bpy.props import FloatProperty,BoolProperty
 
 class CRM_Props(bpy.types.PropertyGroup):
   '''Class for the Properties'''
 
-  p_change: IntProperty(name="Amount Change",
+  p_change: FloatProperty(name="Amount Change",
     description="Amount of change between two meshes.",
     default=1, step=0.01, min=0, max=1)
 
@@ -97,10 +97,10 @@ class OBJECT_OT_Copy_Reference_Mesh_Geometry(bpy.types.Operator):
 
     if material:
       if not len(ob_to.material_slots) == len(ob_from.material_slots):
-      for i in len(ob_from.material_slots):
-        ob_to.data.materials.append(None)
+        for i in len(ob_from.material_slots):
+          ob_to.data.materials.append(None)
       for i in range(len(ob_to.material_slots)):
-          mat.material = ob_from.data.materials[i]
+        mat.material = ob_from.data.materials[i]
 
     if shrinkwrap:
       ob_act_shrinkwrap = ob_act.modifiers.new("Shrinkwrap", type='SHRINKWRAP')
