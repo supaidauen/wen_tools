@@ -87,76 +87,77 @@ class VIEW_3D_PT_WenToolsPanel(bpy.types.Panel):
       col.operator("object.import_obj_quick", text="Import OBJ", icon='GROUP')
 
     #See bottom for registration of properties
-    if context.mode in {'OBJECT'} and hasattr(context.active_object, "name") and 'hair' in context.active_object.name.lower():
-      box = layout.box()
-      col = box.column(align=True)
-      row = col.row(align=True)
-      hair = row.operator("object.prep_hair_object", text="Prepare Hair", icon='MESH_DATA')
-      row.prop(screen, "ht_expanded",
-          icon = "TRIA_DOWN" if screen.ht_expanded else "TRIA_RIGHT",
-          icon_only = True, emboss = True
-          )
-      if screen.ht_expanded:
-        col.alignment = 'EXPAND'
-        col.prop(php, "hair_material_prefix",text='')
-        col.prop(php, "hair_export_object",text='')
-        hair.hair_material_prefix = php.hair_material_prefix
-        hair.hair_export_object = php.hair_export_object
-      col.operator("object.prep_hair_movement", text="Prepare Hair Movement", icon='ARMATURE_DATA')
-
-    box = layout.box()
-    col = box.column(align=True)
-    col.alignment ='EXPAND'
-    col.operator("object.tidy_rename", text="Tidy Rename", icon='OBJECT_DATA')
-    col.operator("object.set_origin_to_world_center", text="Origin to Center", icon='OBJECT_DATA')
-    col.operator("object.merge_to_mesh", text="Merge to Mesh", icon='MESH_DATA')
-    # col.operator("object.put_empty_at_bone_tail", text="Bone Empty", icon='OUTLINER_OB_ARMATURE')
-
-    if context.mode in {'OBJECT'} and context.active_object.type == 'MESH':
-      box = layout.box()
-      col = box.column(align=False)
-      col.alignment ='EXPAND'
-      col.operator("object.clear_mesh", text="Clear Mesh", icon='OBJECT_DATA')
-      col = box.column(align=True)
-      col.alignment ='EXPAND'
-      col.label(text='Multi User Modifier:')
-      col.operator("object.apply_multi_user_modifier", text="Apply", icon='OBJECT_DATA')
-      row = col.row(align=True)
-      row.alignment = 'EXPAND'
-      row.prop(amum, "selected_modifier", text="", emboss=True)
-      row.prop(amum, "keep_modifier", text="Keep")
-      col = box.column(align=True)
-      col.alignment = 'EXPAND'
-      row = col.row(align=True)
-      row.operator("object.copy_vert_loc_from_ref", text="Copy Reference Geometry", icon='MESH_DATA')
-      row.prop(screen, "crg_expanded",
-          icon = "TRIA_DOWN" if screen.crg_expanded else "TRIA_RIGHT",
-          icon_only = True, emboss = True
-          )
-      if screen.crg_expanded:
+    if context.active_object:
+      if context.mode in {'OBJECT'}  and 'hair' in context.active_object.name.lower():
+        box = layout.box()
         col = box.column(align=True)
-        col.prop(crg, "p_change", text='Percent Change')
-        col.prop(crg, "selected_verts", text='Use Only Selected')
-        col.prop(crg, "create_dup", text='Create Duplicate')
-        col.prop(crg, "copy_material", text='Copy Material')
-        col.prop(crg, "create_shape_key", text='Shape Key')
-        col.prop(crg, "shrinkwrap", text='Shrinkwrap')
+        row = col.row(align=True)
+        hair = row.operator("object.prep_hair_object", text="Prepare Hair", icon='MESH_DATA')
+        row.prop(screen, "ht_expanded",
+            icon = "TRIA_DOWN" if screen.ht_expanded else "TRIA_RIGHT",
+            icon_only = True, emboss = True
+            )
+        if screen.ht_expanded:
+          col.alignment = 'EXPAND'
+          col.prop(php, "hair_material_prefix",text='')
+          col.prop(php, "hair_export_object",text='')
+          hair.hair_material_prefix = php.hair_material_prefix
+          hair.hair_export_object = php.hair_export_object
+        col.operator("object.prep_hair_movement", text="Prepare Hair Movement", icon='ARMATURE_DATA')
 
-    if context.mode in {'PAINT_WEIGHT'} and context.active_object.type == 'MESH':
       box = layout.box()
       col = box.column(align=True)
       col.alignment ='EXPAND'
-      col.label(text="Vertex Weights:")
-      row = col.row(align=True)
-      row.operator("object.set_paint_weight", text='1.00').weight_amt = 1.00
-      row.operator("object.set_paint_weight", text='0.75').weight_amt = 0.75
-      row.operator("object.set_paint_weight", text='0.66').weight_amt = 0.66
-      row.operator("object.set_paint_weight", text='0.50').weight_amt = 0.50
-      row = col.row(align=True)
-      row.operator("object.set_paint_weight", text='0.33').weight_amt = 0.33
-      row.operator("object.set_paint_weight", text='0.25').weight_amt = 0.25
-      row.operator("object.set_paint_weight", text='0.10').weight_amt = 0.10
-      row.operator("object.set_paint_weight", text='0.00').weight_amt = 0.00
+      col.operator("object.tidy_rename", text="Tidy Rename", icon='OBJECT_DATA')
+      col.operator("object.set_origin_to_world_center", text="Origin to Center", icon='OBJECT_DATA')
+      col.operator("object.merge_to_mesh", text="Merge to Mesh", icon='MESH_DATA')
+      # col.operator("object.put_empty_at_bone_tail", text="Bone Empty", icon='OUTLINER_OB_ARMATURE')
+
+      if context.mode in {'OBJECT'} and context.active_object.type == 'MESH':
+        box = layout.box()
+        col = box.column(align=False)
+        col.alignment ='EXPAND'
+        col.operator("object.clear_mesh", text="Clear Mesh", icon='OBJECT_DATA')
+        col = box.column(align=True)
+        col.alignment ='EXPAND'
+        col.label(text='Multi User Modifier:')
+        col.operator("object.apply_multi_user_modifier", text="Apply", icon='OBJECT_DATA')
+        row = col.row(align=True)
+        row.alignment = 'EXPAND'
+        row.prop(amum, "selected_modifier", text="", emboss=True)
+        row.prop(amum, "keep_modifier", text="Keep")
+        col = box.column(align=True)
+        col.alignment = 'EXPAND'
+        row = col.row(align=True)
+        row.operator("object.copy_vert_loc_from_ref", text="Copy Reference Geometry", icon='MESH_DATA')
+        row.prop(screen, "crg_expanded",
+            icon = "TRIA_DOWN" if screen.crg_expanded else "TRIA_RIGHT",
+            icon_only = True, emboss = True
+            )
+        if screen.crg_expanded:
+          col = box.column(align=True)
+          col.prop(crg, "p_change", text='Amount Change')
+          col.prop(crg, "selected_verts", text='Use Only Selected')
+          col.prop(crg, "create_dup", text='Create Duplicate')
+          col.prop(crg, "copy_material", text='Copy Material')
+          col.prop(crg, "create_shape_key", text='Shape Key')
+          col.prop(crg, "shrinkwrap", text='Shrinkwrap')
+
+      if context.mode in {'PAINT_WEIGHT'} and context.active_object.type == 'MESH':
+        box = layout.box()
+        col = box.column(align=True)
+        col.alignment ='EXPAND'
+        col.label(text="Vertex Weights:")
+        row = col.row(align=True)
+        row.operator("object.set_paint_weight", text='1.00').weight_amt = 1.00
+        row.operator("object.set_paint_weight", text='0.75').weight_amt = 0.75
+        row.operator("object.set_paint_weight", text='0.66').weight_amt = 0.66
+        row.operator("object.set_paint_weight", text='0.50').weight_amt = 0.50
+        row = col.row(align=True)
+        row.operator("object.set_paint_weight", text='0.33').weight_amt = 0.33
+        row.operator("object.set_paint_weight", text='0.25').weight_amt = 0.25
+        row.operator("object.set_paint_weight", text='0.10').weight_amt = 0.10
+        row.operator("object.set_paint_weight", text='0.00').weight_amt = 0.00
     
     if context.mode in {'POSE','EDIT_ARMATURE'}:
       box = layout.box()
@@ -255,9 +256,9 @@ def register():
   for cls in classes:
     register_class(cls) 
   # Register Properties
-  bpy.types.Scene.copyrefgeometryProps = bpy.props.PointerProperty(type=copy_ref_geometry.crmProps)
+  bpy.types.Scene.copyrefgeometryProps = bpy.props.PointerProperty(type=copy_ref_geometry.CRM_Props)
   bpy.types.Scene.preparehairProps = bpy.props.PointerProperty(type=mesh_hair_tools.phProps)
-  bpy.types.Scene.amumProps = bpy.props.PointerProperty(type=basic_ops.amumProps)
+  bpy.types.Scene.amumProps = bpy.props.PointerProperty(type=basic_ops.AMUM_Props)
   bpy.types.Screen.uet_expanded = bpy.props.BoolProperty(default=False)
   bpy.types.Screen.crg_expanded = bpy.props.BoolProperty(default=False)
   bpy.types.Screen.ht_expanded = bpy.props.BoolProperty(default=False)

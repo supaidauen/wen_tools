@@ -19,12 +19,12 @@
 import bpy
 from bpy.props import IntProperty,BoolProperty
 
-class crmProps(bpy.types.PropertyGroup):
+class CRM_Props(bpy.types.PropertyGroup):
   '''Class for the Properties'''
 
-  p_change: IntProperty(name="Percent Change",
-    description="Percent of change between two meshes.",
-    default=100, step=1, min=0, max=100)
+  p_change: IntProperty(name="Amount Change",
+    description="Amount of change between two meshes.",
+    default=1, step=0.01, min=0, max=1)
 
   selected_verts: BoolProperty(name="Only Selected",
     description="Use only selected verts.",
@@ -55,174 +55,80 @@ class OBJECT_OT_Copy_Reference_Mesh_Geometry(bpy.types.Operator):
 
   @classmethod
   def poll(self, context):
-    obj = context.active_object
-    return (obj and obj.type == 'MESH')
+    ob = context.active_object
+    return (ob and ob.type == 'MESH')
 
   def execute(self, context):
-    crg = context.window_manager.copyrefgeometryProps
+    crg = context.scene.copyrefgeometryProps
+    cont = bpy.context
+  # Make sure only two objects are selected.
+    if len(cont.selected_objects) != 2:
+      self.report({'ERROR'},"Must have exactly 2 mesh objects selected")
+      return{'CANCELLED'}
+    for ob in cont.selected_objects:
+      if ob.type != 'MESH':
+        self.report({'ERROR'},"Must have exactly 2 mesh objects selected")
+        return{'CANCELLED'}
+    # Get the active object, there can only ever be 1.
+    ob_act = cont.active_object
+    # Set the other object as our second selection.
+    ob_sel = [ob for ob in cont.selected_objects if ob is not ob_act][0]
 
-    if ob_check(self) == False:
-      return {'CANCELLED'}
+    if dup:
+      ob_act.select_set(False)
+      # Make a duplicate so we preserve our previous mesh.
+      ob_temp = ob_act.copy()
+      ob_temp.name = ob_act.name+"_dup"
+      ob_temp.data = ob_act.data.copy()
+      ob_temp.data.name = ob_act.data.name+"_dup"
+      C.view_layer.active_layer_collection.collection.objects.link(ob_temp)
+      ob_temp.select_set(True)
+      bpy.context.view_layer.objects.active = ob_act = new_object
+
+    if s_key:
+      if ob_act.data.shape_keys == None:
+        shapeKey = ob_act.shape_key_add(from_mix=False)
+        shapeKey.name = "Basis"
+        for v in ob_act.data.vertices:
+          shapeKey.data[v.index].co = vert.co
+      shapeKey = ob_act.shape_key_add(from_mix=False)
+      shapeKey.name = ob_sel.name+".skey"
+      return(True)
+
+    if material:
+      if not len(ob_to.material_slots) == len(ob_from.material_slots):
+      for i in len(ob_from.material_slots):
+        ob_to.data.materials.append(None)
+      for i in range(len(ob_to.material_slots)):
+          mat.material = ob_from.data.materials[i]
+
+    if shrinkwrap:
+      ob_act_shrinkwrap = ob_act.modifiers.new("Shrinkwrap", type='SHRINKWRAP')
+      ob_act_shrinkwrap.target = ob_sel
+      ob_act_shrinkwrap.vertex_group = "wrap"
+      ob_act_shrinkwrap.use_keep_above_surface = True
+
+    if ob_act.data.shape_keys:
+      verts = ob_act.active_shape_key.data
     else:
-      process_mesh(crg.create_dup,
-             crg.p_change,
-             crg.create_shape_key,
-             crg.selected_verts,
-             crg.copy_material,
-             crg.shrinkwrap)
-    bpy.context.scene.update()
+      verts = ob_act.data.vertices
+
+    for v in ob_act.data.vertices:
+      if s_verts:
+        if not v.select_get():
+          continue
+      co = verts[v.index].co
+      co_trans = ob_sel.data.vertices[v.index]
+      co.x = ((co_trans.co.x - co.x) * p_change) + co.x
+      co.y = ((co_trans.co.y - co.y) * p_change) + co.y
+      co.z = ((co_trans.co.z - co.z) * p_change) + co.z
+
+    bpy.context.view_layer.update()
     return {'FINISHED'}
 
-def ob_check(self):
-  cont = bpy.context
-  # Make sure only two objects are selected.
-  if len(cont.selected_objects) != 2:
-    self.report({'ERROR'},"Must have exactly 2 mesh objects selected")
-    return(False)
-  for ob in cont.selected_objects:
-    if ob.type != 'MESH':
-      self.report({'ERROR'},"Must have exactly 2 mesh objects selected")
-      return(False)
-  return(True)
-
-def process_mesh(dup,
-         p_change,
-         s_key,
-         s_verts,
-         material,
-         shrinkwrap):
-  cont = bpy.context
-  # Get the active object, there can only ever be 1.
-  ob_act = cont.active_object
-  # Set the other object as our second selection.
-  for ob in cont.selected_objects:
-    if ob != ob_act:
-      ob_sel = ob
-  if dup:
-    # Make a duplicate so we preserve our previous mesh.
-    scn = bpy.context.scene
-    c = ob_sel
-    d = c.copy()
-    d.data = c.data.copy()
-    scn.objects.link(d)
-
-  if s_key:
-    if ob_act.data.shape_keys == None:
-      shapeKey = ob_act.shape_key_add(from_mix=False)
-      shapeKey.name = "Basis"
-      for vert in ob_act.data.vertices:
-        shapeKey.data[vert.index].co = vert.co
-    shapeKey = ob_act.shape_key_add(from_mix=False)
-    shapeKey.name = ob_sel.name+".skey"
-
-    for vert in ob_sel.data.vertices:
-      shapeKey.data[vert.index].co = vert.co
-    return(True)
-
-  if material:
-    set_material(ob_act,ob_sel)
-
-  if shrinkwrap:
-    ob_act_shrinkwrap = ob_act.modifiers.new("Shrinkwrap", type='SHRINKWRAP')
-    ob_act_shrinkwrap.target = ob_sel
-    ob_act_shrinkwrap.vertex_group = "wrap"
-    ob_act_shrinkwrap.use_keep_above_surface = True
-
-  if ob_act.data.shape_keys and s_verts:
-    for ob_act_keys,ob_sel_keys in zip(ob_act.data.shape_keys.key_blocks,
-                                       ob_sel.data.shape_keys.key_blocks):
-      ob_act_verts = ob_act_keys.data
-      ob_sel_verts = ob_sel_keys.data
-      move_verts(
-        ob_act.data.vertices,
-        ob_act_verts,
-        ob_sel_verts,
-        s_verts,
-        p_change,ob_act
-        )
-
-  else:
-    ob_act_verts = ob_act.data.vertices
-    ob_sel_verts = ob_sel.data.vertices
-    move_verts(
-      ob_act_verts,
-      ob_act_verts,
-      ob_sel_verts,
-      s_verts,
-      p_change,
-      ob_act
-      )
-
-def move_verts(
-      iterable,
-      ob_act_verts,
-      ob_sel_verts,
-      s_verts,
-      p_change,
-      ob_act
-      ):
-  cont = bpy.context
-  def do_move(v1,v2):
-    v1.co.x = ((v2.co.x - v1.co.x) * p_change) + v1.co.x
-    v1.co.y = ((v2.co.y - v1.co.y) * p_change) + v1.co.y
-    v1.co.z = ((v2.co.z - v1.co.z) * p_change) + v1.co.z
-  p_change = p_change*0.01
-  if ob_act.data.shape_keys:
-    for ob in bpy.context.selected_objects:
-      ob.select_set(False)
-    ob_act.select_set(True)
-    bpy.ops.object.duplicate()
-    for ob in cont.selected_objects:
-      if ob != ob_act:
-        ob_proxy = ob
-    for ob in bpy.context.selected_objects:
-      ob.select_set(False)
-    ob_act.select_set(True)
-    bpy.context.scene.objects.active = ob_act
-    bpy.ops.object.shape_key_remove(all=True)
-    for i,v1,v2 in zip(iterable,ob_act_verts,ob_sel_verts):
-      if s_verts:
-        if i.select:
-          do_move(v1,v2)
-      else:
-        do_move(v1,v2)
-    ob_proxy.select_set(True)
-    for i in range(0,len(ob_proxy.data.shape_keys.key_blocks)):
-      if i:
-        ob_proxy.active_shape_key_index = i
-        bpy.ops.object.shape_key_transfer()
-    for ob in bpy.context.selected_objects:
-      ob.select_set(False)
-    ob_proxy.select_set(True)
-    bpy.ops.object.delete(use_global=True)
-    for i in bpy.data.meshes:
-      if not i.users:
-        bpy.data.meshes.remove(i)
-    ob_act.select_set(True)
-    bpy.context.scene.objects.active = ob_act
-    return(True)
-  else:
-    for i,v1,v2 in zip(iterable,ob_act_verts,ob_sel_verts):
-      if s_verts:
-        if i.select:
-          do_move(v1,v2)
-      else:
-        do_move(v1,v2)
-
-  return(True)
-
-def set_material(ob_to, ob_from):
-  if not len(ob_to.material_slots) == len(ob_from.material_slots):
-    for i in len(ob_from.material_slots):
-      ob_to.data.materials.append(None)
-  for ob_to_mat,ob_from_mat in zip(ob_to.material_slots,ob_from.material_slots):
-      ob_to_mat.material = ob_from_mat.material
-  return
-
-import sys,inspect
 classes = (
 OBJECT_OT_Copy_Reference_Mesh_Geometry,
-crmProps,
+CRM_Props,
 )
 
 def register():

@@ -279,7 +279,7 @@ def update_mods_cb(self, context):
   amum = context.scene.amumProps
   return amum
 
-class amumProps(bpy.types.PropertyGroup):
+class AMUM_Props(bpy.types.PropertyGroup):
   keep_modifier: BoolProperty(
     description="Keep copy of Modifier",
     default=True
@@ -432,7 +432,8 @@ class OBJECT_OT_Merge_to_Mesh(bpy.types.Operator):
       ob.select_set(False)
       mesh.name = ob.name+"_temp"
       new_object = D.objects.new(ob.name+"_temp", mesh)
-      C.view_layer.active_layer_collection.collection.objects.link(new_object)
+      C.scene.collection.objects.link(new_object)
+      # C.view_layer.active_layer_collection.collection.objects.link(new_object)
       new_object.select_set(True)
       meshes.append(new_object)
       try:
@@ -449,7 +450,7 @@ class OBJECT_OT_Merge_to_Mesh(bpy.types.Operator):
     ctx['object'] = ctx['active_object'] = active_object
     ctx['selected_objects'] = ctx['selectable_editable_objects'] = meshes
     bpy.ops.object.join(ctx)
-    active_object.name = name + "_joined"
+    active_object.name = name + "_new"
     bpy.context.view_layer.objects.active = active_object
     C.view_layer.objects.update()
 
@@ -457,6 +458,7 @@ class OBJECT_OT_Merge_to_Mesh(bpy.types.Operator):
 
 import sys,inspect
 classes = (
+AMUM_Props,
 OBJECT_OT_Clear_Mesh,
 OBJECT_OT_Image_Save_Options,
 OBJECT_OT_Pose_Rest_Toggle,
@@ -468,7 +470,6 @@ OBJECT_OT_Apply_Multi_User_Modifier,
 OBJECT_OT_Empty_At_Bone_Tail,
 OBJECT_OT_Origin_to_world_center,
 OBJECT_OT_Set_Paint_Weight,
-amumProps,
 OBJECT_OT_Merge_to_Mesh,
 )
 
