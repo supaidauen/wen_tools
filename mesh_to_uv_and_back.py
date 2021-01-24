@@ -21,7 +21,7 @@ def flatten_to_uv_co(ob):
   c = ob
   d = c.copy()
   d.data = c.data.copy()
-  bpy.context.scene.objects.link(d)
+  bpy.context.scene.collection.objects.link(d)
   bpy.context.scene.objects.active = d
   #bpy.ops.object.duplicate(linked=False, mode='TRANSLATION')
   print("Duplicated the object")

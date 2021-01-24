@@ -19,6 +19,30 @@
 import bpy
 from bpy.props import BoolProperty,EnumProperty,FloatProperty
 
+class OBJECT_OT_Display_Wireframe_Toggle(bpy.types.Operator):
+  '''Display Wireframe'''
+  bl_idname = "object.display_as_wireframe"
+  bl_label = "Display as Wireframe"
+  bl_options = {'REGISTER', 'UNDO'}
+
+  @classmethod
+  def poll(self, context):
+    obj = context.active_object
+    if hasattr(obj, 'display_type'):
+      return (obj)
+  def execute(self, context):
+    ob = context.active_object
+    if not 'display_type' in ob:
+        ob['display_type'] = ob.display_type
+    if ob.display_type == 'WIRE':
+      return {'FINISHED'}
+    elif ob.display_type == ob['display_type']:
+        ob.display_type = 'WIRE'
+    else:
+        ob.display_type = ob['display_type']
+        ob.pop('display_type', None)
+    return {'FINISHED'}
+
 class OBJECT_OT_Clear_Mesh(bpy.types.Operator):
   '''Clear Mesh'''
   
@@ -459,6 +483,7 @@ class OBJECT_OT_Merge_to_Mesh(bpy.types.Operator):
 import sys,inspect
 classes = (
 AMUM_Props,
+OBJECT_OT_Display_Wireframe_Toggle,
 OBJECT_OT_Clear_Mesh,
 OBJECT_OT_Image_Save_Options,
 OBJECT_OT_Pose_Rest_Toggle,
