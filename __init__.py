@@ -217,7 +217,7 @@ class VIEW_3D_PT_WenToolsPanel(bpy.types.Panel):
             col.prop(cbk, "use_pass_glossy")
             col.prop(cbk, "use_pass_transmission")
 
-            col.prop(cbk, "use_pass_subsurface")
+            # col.prop(cbk, "use_pass_subsurface")
             col.prop(cbk, "use_pass_ambient_occlusion")
             col.prop(cbk, "use_pass_emit")
 

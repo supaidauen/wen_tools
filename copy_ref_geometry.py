@@ -74,39 +74,39 @@ class OBJECT_OT_Copy_Reference_Mesh_Geometry(bpy.types.Operator):
     # Set the other object as our second selection.
     ob_sel = [ob for ob in cont.selected_objects if ob is not ob_act][0]
 
-    if dup:
+    if crg.create_dup:
       ob_act.select_set(False)
       # Make a duplicate so we preserve our previous mesh.
       ob_temp = ob_act.copy()
       ob_temp.name = ob_act.name+"_dup"
       ob_temp.data = ob_act.data.copy()
       ob_temp.data.name = ob_act.data.name+"_dup"
-      C.view_layer.active_layer_collection.collection.objects.link(ob_temp)
+      cont.view_layer.active_layer_collection.collection.objects.link(ob_temp)
       ob_temp.select_set(True)
-      bpy.context.view_layer.objects.active = ob_act = new_object
+      bpy.context.view_layer.objects.active = ob_act = ob_temp
 
-    if s_key:
+    if crg.create_shape_key:
       if ob_act.data.shape_keys == None:
         shapeKey = ob_act.shape_key_add(from_mix=False)
         shapeKey.name = "Basis"
         for v in ob_act.data.vertices:
-          shapeKey.data[v.index].co = vert.co
+          shapeKey.data[v.index].co = v.co
       shapeKey = ob_act.shape_key_add(from_mix=False)
       shapeKey.name = ob_sel.name+".skey"
-      return(True)
 
-    if material:
-      if not len(ob_to.material_slots) == len(ob_from.material_slots):
-        for i in len(ob_from.material_slots):
-          ob_to.data.materials.append(None)
-      for i in range(len(ob_to.material_slots)):
-        mat.material = ob_from.data.materials[i]
+    if crg.copy_material:
+      if not len(ob_act.material_slots) == len(ob_sel.material_slots):
+        for i in range(len(ob_sel.material_slots)):
+          ob_act.data.materials.append(None)
+      for i in range(len(ob_act.material_slots)):
+        ob_act.material_slots[i].material = ob_sel.data.materials[i]
 
-    if shrinkwrap:
+    if crg.shrinkwrap:
       ob_act_shrinkwrap = ob_act.modifiers.new("Shrinkwrap", type='SHRINKWRAP')
       ob_act_shrinkwrap.target = ob_sel
       ob_act_shrinkwrap.vertex_group = "wrap"
-      ob_act_shrinkwrap.use_keep_above_surface = True
+      ob_act_shrinkwrap.wrap_method = 'NEAREST_SURFACEPOINT'
+      ob_act_shrinkwrap.wrap_mode = 'ABOVE_SURFACE'
 
     if ob_act.data.shape_keys:
       verts = ob_act.active_shape_key.data
@@ -114,8 +114,9 @@ class OBJECT_OT_Copy_Reference_Mesh_Geometry(bpy.types.Operator):
       verts = ob_act.data.vertices
 
     for v in ob_act.data.vertices:
-      if s_verts:
-        if not v.select_get():
+      p_change = crg.p_change
+      if crg.selected_verts:
+        if not v.select:
           continue
       co = verts[v.index].co
       co_trans = ob_sel.data.vertices[v.index]
