@@ -65,8 +65,9 @@ class VIEW_3D_PT_WenToolsPanel(bpy.types.Panel):
   def draw(self, context):
     scene = context.scene
     crg = scene.copyrefgeometryProps
-    php = scene.preparehairProps
+    #php = scene.preparehairProps
     amum = scene.amumProps
+    cselect = scene.csProps
     layout = self.layout
 
     screen = context.screen
@@ -87,8 +88,8 @@ class VIEW_3D_PT_WenToolsPanel(bpy.types.Panel):
       col.operator("object.import_obj_quick", text="Import OBJ", icon='GROUP')
 
     #See bottom for registration of properties
-    if context.active_object:
-      if context.mode in {'OBJECT'}  and 'hair' in context.active_object.name.lower():
+    if hasattr(context,"active_object"):
+      '''if context.mode in {'OBJECT'}  and 'hair' in context.active_object.name.lower():
         box = layout.box()
         col = box.column(align=True)
         row = col.row(align=True)
@@ -104,30 +105,20 @@ class VIEW_3D_PT_WenToolsPanel(bpy.types.Panel):
           hair.hair_material_prefix = php.hair_material_prefix
           hair.hair_export_object = php.hair_export_object
         col.operator("object.prep_hair_movement", text="Prepare Hair Movement", icon='ARMATURE_DATA')
-
+      '''
       box = layout.box()
       col = box.column(align=True)
       col.alignment ='EXPAND'
       col.operator("object.tidy_rename", text="Tidy Rename", icon='OBJECT_DATA')
       col.operator("object.set_origin_to_world_center", text="Origin to Center", icon='OBJECT_DATA')
       col.operator("object.merge_to_mesh", text="Merge to Mesh", icon='MESH_DATA')
+      col.operator("object.fix_symmetry", text="Fix Symmetry", icon='MESH_DATA')
       # col.operator("object.put_empty_at_bone_tail", text="Bone Empty", icon='OUTLINER_OB_ARMATURE')
 
-      if context.mode in {'OBJECT'} and context.active_object.type == 'MESH':
-        box = layout.box()
-        col = box.column(align=False)
-        col.alignment ='EXPAND'
+      if context.mode in {'OBJECT'} \
+        and hasattr(context.active_object,"type") \
+        and context.active_object.type == 'MESH':
         col.operator("object.clear_mesh", text="Clear Mesh", icon='OBJECT_DATA')
-        col = box.column(align=True)
-        col.alignment ='EXPAND'
-        col.label(text='Multi User Modifier:')
-        col.operator("object.apply_multi_user_modifier", text="Apply", icon='OBJECT_DATA')
-        row = col.row(align=True)
-        row.alignment = 'EXPAND'
-        row.prop(amum, "selected_modifier", text="", emboss=True)
-        row.prop(amum, "keep_modifier", text="Keep")
-        col = box.column(align=True)
-        col.alignment = 'EXPAND'
         row = col.row(align=True)
         row.operator("object.copy_vert_loc_from_ref", text="Copy Reference Geometry", icon='MESH_DATA')
         row.prop(screen, "crg_expanded",
@@ -143,7 +134,30 @@ class VIEW_3D_PT_WenToolsPanel(bpy.types.Panel):
           col.prop(crg, "create_shape_key", text='Shape Key')
           col.prop(crg, "shrinkwrap", text='Shrinkwrap')
 
-      if context.mode in {'PAINT_WEIGHT'} and context.active_object.type == 'MESH':
+        box = layout.box()
+        col = box.column(align=False)
+        col.alignment ='EXPAND'
+        row = col.row(align=True)
+        row.label(text='Multi User Modifier:')
+        row.prop(amum, "keep_modifier", text="Keep")
+        row = col.row(align=True)
+        row.alignment = 'EXPAND'
+        row.prop(amum, "selected_modifier", text="", emboss=True)
+        row.operator("object.apply_multi_user_modifier", text="Apply", icon='OBJECT_DATA')
+        
+        
+      if context.mode and cselect.character != "__None__":
+        box = layout.box()
+        col = box.column(align=False)
+        col.alignment ='EXPAND'
+        col.label(text='Character Select:')
+        row = col.row(align=True)
+        row.alignment = 'EXPAND'
+        row.operator_menu_enum("object.character_select", property="characters", text=cselect.character)
+
+      if context.mode in {'PAINT_WEIGHT'} \
+        and hasattr(context.active_object,"type") \
+        and context.active_object.type == 'MESH':
         box = layout.box()
         col = box.column(align=True)
         col.alignment ='EXPAND'
@@ -259,6 +273,7 @@ def register():
   bpy.types.Scene.copyrefgeometryProps = bpy.props.PointerProperty(type=copy_ref_geometry.CRM_Props)
   bpy.types.Scene.preparehairProps = bpy.props.PointerProperty(type=mesh_hair_tools.phProps)
   bpy.types.Scene.amumProps = bpy.props.PointerProperty(type=basic_ops.AMUM_Props)
+  bpy.types.Scene.csProps = bpy.props.PointerProperty(type=character_select.CS_Props)
   bpy.types.Screen.uet_expanded = bpy.props.BoolProperty(default=False)
   bpy.types.Screen.crg_expanded = bpy.props.BoolProperty(default=False)
   bpy.types.Screen.ht_expanded = bpy.props.BoolProperty(default=False)
@@ -270,8 +285,8 @@ def unregister():
     unregister_class(cls)
   del bpy.types.Scene.copyrefgeometryProps
   del bpy.types.Scene.preparehairProps
-  del bpy.types.Scene.applymultiusermodifierProps
-  del bpy.types.Scene.dyn_list
+  del bpy.types.Scene.amumProps
+  del bpy.types.Scene.csProps
   del bpy.types.Screen.uet_expanded
   del bpy.types.Screen.crg_expanded
   del bpy.types.Screen.ht_expanded

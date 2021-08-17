@@ -34,7 +34,8 @@ class OBJECT_OT_Display_Wireframe_Toggle(bpy.types.Operator):
     ob = context.active_object
     if not 'display_type' in ob:
         ob['display_type'] = ob.display_type
-    if ob.display_type == 'WIRE':
+    if ob['display_type'] == 'WIRE':
+      ob.pop('display_type', None)
       return {'FINISHED'}
     elif ob.display_type == ob['display_type']:
         ob.display_type = 'WIRE'
@@ -480,7 +481,47 @@ class OBJECT_OT_Merge_to_Mesh(bpy.types.Operator):
 
     return {'FINISHED'}
 
-import sys,inspect
+class OBJECT_OT_Fix_Symmetry(bpy.types.Operator):
+  '''Fixes Symmetry of a mesh by aligning X and weightgroups'''
+
+  bl_idname = "object.fix_symmetry"
+  bl_label = "Fix Symmetry"
+  bl_options = {'REGISTER', 'UNDO'}
+
+  def execute(self,context):
+    C = bpy.context
+    D = bpy.data
+
+    mode = bpy.context.object.mode
+    bpy.ops.object.mode_set(mode='OBJECT')
+    ob = C.active_object
+    for v in ob.data.vertices:
+        old_orient = "_r" if v.co.x > 0 else "_l" 
+        new_orient = "_l" if v.co.x > 0 else "_r" 
+        for g in v.groups:
+            name = ob.vertex_groups[g.group].name
+            vgroup = ob.vertex_groups[g.group]
+            if old_orient in name:
+                new_group = name.replace(old_orient,new_orient)
+                new_group_index = ob.vertex_groups[new_group].index
+                new_vgroup = ob.vertex_groups[new_group_index]
+                new_group_weight = g.weight
+                vgroup.remove([v.index])
+                new_vgroup.add([v.index],new_group_weight,'REPLACE')
+                
+    for v in ob.data.vertices:
+        if v.select:
+            if ob.data.shape_keys:
+                n = ob.active_shape_key.name
+                sk = ob.data.shape_keys.key_blocks[n]
+                v = sk.data[v.index]
+            v.co.x = 0
+    print(mode)
+    bpy.ops.object.mode_set(mode=mode)
+    C.view_layer.update()
+    
+    return {'FINISHED'}
+
 classes = (
 AMUM_Props,
 OBJECT_OT_Display_Wireframe_Toggle,
@@ -496,6 +537,7 @@ OBJECT_OT_Empty_At_Bone_Tail,
 OBJECT_OT_Origin_to_world_center,
 OBJECT_OT_Set_Paint_Weight,
 OBJECT_OT_Merge_to_Mesh,
+OBJECT_OT_Fix_Symmetry,
 )
 
 def register():
